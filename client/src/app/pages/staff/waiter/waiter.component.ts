@@ -207,7 +207,7 @@ export class WaiterComponent implements OnInit, OnDestroy {
   async selectTable(t: number) {
     if (this.tableStatus[t]) {
       const action = await this.confirmPopup(
-        `Bàn ${t} đang phục vụ. Nhấn OK để XÓA BÀN (Hoàn tất) hoặc Hủy để xem đơn.`,
+        `Bàn ${t} đang phục vụ. Nhấn xanh lá để XÓA BÀN hoặc Đỏ để xem đơn cũ.`,
         t
       );
 
