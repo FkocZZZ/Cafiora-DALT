@@ -1,1 +1,50 @@
-<p>view-revenue works!</p>
+<div class="revenue-page">
+  <header class="revenue-header">
+    <h1>Revenue Overview</h1>
+  </header>
+
+  <section class="revenue-controls">
+    <div class="summary">
+      <label class="summary-label">Tổng doanh thu tháng</label>
+      <div class="summary-value">
+        {{ monthlyRevenue() | currency: 'VND' : 'symbol' : '1.0-0'}}
+      </div>
+    </div>
+
+    <div class="filters">
+      <label for="dateRange">Bộ lọc thời gian</label>
+      <div class="filter-controls">
+        <button
+          type="button"
+          class="date-btn"
+          (click)="toggleCalendar()"
+          [attr.aria-expanded]="calendarOpen() ? 'true' : 'false'"
+          aria-haspopup="dialog"
+          aria-label="Chọn ngày"
+        >
+          {{ (selectedDate() ?? today) | date:'MMM d':'':'en-US' }}
+        </button>
+
+        @if (calendarOpen()) {
+          <div class="calendar-overlay" (click)="calendarOpen.set(false)">
+            <div class="calendar-popup" (click)="$event.stopPropagation()">
+              <app-calendar
+                [selected]="selectedDate() ?? today"
+                (select)="onCalendarSelect($event)"
+              />
+            </div>
+          </div>
+        }
+
+        <button class="btn reset" (click)="reset()">Đặt lại</button>
+
+      </div>
+    </div>
+  </section>
+
+  <div class="content-two-col">
+    <app-revenue-chart  [baseDate]="selectedDate() ?? today"></app-revenue-chart>
+
+    <app-revenue-detail [orders]="orders()" [selectedDate]="selectedDate()"/>
+  </div>
+</div>

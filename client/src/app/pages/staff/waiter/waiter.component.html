@@ -51,7 +51,9 @@
           <div class="table-grid">
             <div *ngFor="let t of tables"
                  class="table-box"
-                 [ngClass]="{ 'selected': tableStatus[t] }"
+                 [class.selected]="selectedTable === t"
+                 [class.pending-order]="tableStatus[t] && !completedTables[t]"
+                 [class.completed-order]="completedTables[t]"
                  (click)="selectTable(t)">
               Bàn {{ t }}
             </div>
@@ -93,10 +95,11 @@
         </div>
       </div>
 
-
-
-
-
+      <div class="notification-box" *ngIf="showMessage">
+        {{ messageText }}
+      </div>
     </div>
   </div>
 </div>
+
+

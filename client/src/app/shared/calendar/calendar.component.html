@@ -1,0 +1,48 @@
+<div class="calendar-dialog">
+  <!-- <div class="top-accent"></div> -->
+
+  <!-- Header -->
+  <div class="calendar-header">
+    <button class="nav left" (click)="prevMonth()" aria-label="Previous">‹</button>
+    <div class="title">{{ viewDate().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) }}</div>
+    <button class="nav right" (click)="nextMonth()" aria-label="Next">›</button>
+  </div>
+
+  <div class="calendar-content">
+    <!-- Weekday names -->
+    <div class="day-names">
+      @for (w of weekdays; track $index) {
+        <div>{{ w }}</div>
+      }
+    </div>
+
+    <!-- Calendar grid -->
+    <div class="grid">
+      @for (week of weeks(); track $index) {
+
+          <div class="week">
+            @for (day of week; track $index; let ci = $index) {
+              <div
+              class="cell"
+                  [class.empty]="!day"
+                  [class.today]="isToday(day)"
+                  [class.sunday]="isSunday(ci)"
+                  [class.selected]="day &&
+                                  selectedValue() &&
+                                  selectedValue()!.getDate() === day &&
+                                  selectedValue()!.getMonth() === viewDate().getMonth() &&
+                                  selectedValue()!.getFullYear() === viewDate().getFullYear()"
+                (click)="choose(day)"
+                >
+                
+                @if (day) {
+                  <span>{{ day }}</span>
+                }
+                
+              </div>
+            }
+        </div>
+      }
+    </div>
+  </div>
+</div>

@@ -30,6 +30,8 @@ export class MenuComponent implements OnInit {
   categories: string[] = ['Coffee', 'Tea', 'Juice', 'Food', 'Other'];
   selectedCategory: string = '';
   selectedPriceSort: string = '';
+  searchKeyword: string = '';
+
 
   constructor(private http: HttpClient) {}
 
@@ -67,6 +69,13 @@ export class MenuComponent implements OnInit {
     } else if (this.selectedPriceSort === 'desc') {
       temp.sort((a, b) => b.price - a.price);
     }
+
+    //tim kiem theo tu khoa
+    if(this.searchKeyword.trim() !== ''){
+      const keyword = this.searchKeyword.trim().toLowerCase();
+      temp = temp.filter(p => p.nameProduct.toLowerCase().includes(keyword));
+    }
+
 
     this.filteredProducts = temp;
   }

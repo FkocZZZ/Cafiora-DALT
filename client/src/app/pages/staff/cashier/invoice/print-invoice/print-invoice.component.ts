@@ -1,8 +1,8 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { OrderDetailModel, OrderModel } from '../../../../model/order.model';
-import { OrderService } from '../../../../services/order.service';
-import { AsyncPipe, DatePipe, DecimalPipe } from '@angular/common';
-import { BehaviorSubject, distinctUntilChanged, filter, map, Observable, ReplaySubject, Subject, switchMap, tap } from 'rxjs';
+import { OrderDetailModel, OrderModel } from '../../../../../model/order.model';
+import { OrderService } from '../../../../../services/order.service';
+import { AsyncPipe, DatePipe, DecimalPipe, NgClass } from '@angular/common';
+import { distinctUntilChanged, map, Observable, ReplaySubject, switchMap, tap } from 'rxjs';
 
 interface FlattenDetailItem {
   orderDetailId?: string;
@@ -17,19 +17,21 @@ interface FlattenDetailItem {
 
 @Component({
   selector: 'app-print-invoice',
-  imports: [DatePipe, AsyncPipe, DecimalPipe],
+  imports: [DatePipe, AsyncPipe, DecimalPipe, NgClass],
   templateUrl: './print-invoice.component.html',
   styleUrl: './print-invoice.component.scss'
 })
 export class PrintInvoiceComponent implements OnInit {
   private orderService = inject(OrderService);
 
+  toastMessage: string | null = null;
+  private toastTimer?: any;
+
   orders$: Observable<OrderModel[]> = this.orderService.getAllOrders()
   .pipe(
     tap(o => console.log('orders$ emitted', o))
   );
 
-  // private selectedDetailId$ = new Subject<string>();
   private selectedDetailId$ = new ReplaySubject<string>(1);
   // orderDetail$: Observable<OrderDetailModel[]> = this.selectedDetailId$.pipe(
   //   tap(id => console.log('selectedDetailId emitted', id)),
@@ -115,6 +117,44 @@ export class PrintInvoiceComponent implements OnInit {
     }
   }
 
-  
+  checkout(): void {
+    if (!this.selectedOrder) {
+      return;
+    }
+
+    if(this.selectedOrder.isPaid) {
+      this.showToast('Đơn hàng đã được thanh toán', 30000);
+      return;
+    }
+
+    //Cap nhat server
+    // this.orderService.markPaid(this.selectedOrder.orderId).subscribe({
+    //   next: () => this.showToast('Đã thanh toán thành công', 3000),
+    //   error: () => this.showToast('Thanh toán thất bại', 3000)
+
+    this.selectedOrder.isPaid = true;
+
+    
+    this.showToast('Đã thanh toán thành công', 30000);
+  }
+
+  showToast(message: string, duration = 30000) {
+    this.toastMessage = message;
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
+    }
+    this.toastTimer = setTimeout(() => {
+      this.toastMessage = null;
+      this.toastTimer = undefined;
+    }, duration)
+  }
+
+  closeToast() {
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
+      this.toastTimer = undefined;
+    }
+    this.toastMessage = null
+  }
 
 }

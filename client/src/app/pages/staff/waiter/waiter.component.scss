@@ -12,7 +12,6 @@
   border-radius: 20px;
   border: 2px solid #eee;
   background: #fff;
-  width: 100%;
   height: 90vw;
 }
 
@@ -22,7 +21,6 @@
   flex-direction: column;
   padding: 15px;
   border-radius: 20px;
-  border: 2px solid #eee;
   background: #fff;
   min-height: 600px;
   position: relative; // cần cho sticky
@@ -34,17 +32,15 @@
   }
 }
 
-
 .cart-list-wrapper {
   flex: 1 1 auto;
   min-height: 300px;
-  max-height: 300px;
+  max-height: 200px;
   overflow-y: auto;
   margin-bottom: 15px;
 }
 
 .bottom-section {
-  margin-top: 0px;
   display: flex;
   flex-direction: column;
   gap: 15px;
@@ -64,7 +60,7 @@
   cursor: pointer;
   transition: 0.2s ease;
   background: #fafafa;
-
+  width: 150px;
   &:hover {
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     transform: translateY(-4px);
@@ -77,6 +73,16 @@
     border-radius: 6px;
   }
 
+  h3{
+    margin:5px 0;
+    font-size: 15px;
+  }
+
+  p{
+    margin: 0;
+    font-size: 15px;
+
+  }
   .price {
     color: #c0392b;
     font-weight: bold;
@@ -150,64 +156,131 @@
   }
 }
 
-/* CHỌN BÀN */
-.table-selection {
-  margin-top: 15px;
-  text-align: center;
+.table-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); // Nên dùng grid thay vì flex để bàn đều nhau
+  gap:20px;
+  width: 475px;
+  margin-bottom: 35px;
+}
 
-  h3 {
-    margin-bottom: 8px;
-    font-weight: 600;
-    font-size: 1rem;
-    color: #333;
+.table-box {
+  width: 100%; // Fit theo grid
+  aspect-ratio: 1; // Giữ hình vuông
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f1f1;
+  color: #333;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  border: 3px solid transparent; // Tạo viền trong suốt để khi select không bị nhảy size
+  position: relative;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
   }
 
-  .table-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
+  // --- TRẠNG THÁI 1: BÌNH THƯỜNG (Đang chọn để thao tác) ---
+  // Khi click vào bàn nào, bàn đó sẽ có viền Xanh Dương đậm để biết đang thao tác bàn đó
+  &.selected {
+    border-color: #2196F3;
+    transform: scale(1.05);
   }
 
-  .table-box {
-    width: 90px;
-    height: 90px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f1f1f1;
-    font-weight: 600;
-    cursor: pointer;
-    transition: 0.3s;
-
-    &:hover {
-      background: #e0e0e0;
-    }
-
-    &.selected {
-      background: #4caf50;
-      color: white;
-      transform: scale(1.05);
-      box-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
-    }
-  }
-
-  .reset-btn {
-    padding: 12px 20px;
-    border-radius: 8px;
-    background-color: rgba(110, 77, 58, 0.5);
+  // --- TRẠNG THÁI 2: PENDING (Đã đặt, Barista đang làm) ---
+  // Màu CAM
+  &.pending-order {
+    background: #FF9800 !important;
     color: white;
-    border: none;
-    cursor: pointer;
-    font-weight: bold;
-    height: fit-content; // để vừa với chiều cao grid
-    transition: background-color 0.2s;
-    width: 100%;
-    margin-top: 10px;
+    animation: pulse-orange 2s infinite; // Hiệu ứng nhấp nháy nhẹ để chú ý
+  }
 
-    &:hover {
-      background-color: #73543f;
+  // --- TRẠNG THÁI 3: COMPLETED (Barista đã xong) ---
+  // Màu XANH LÁ
+  &.completed-order {
+    background: #4CAF50 !important;
+    color: white;
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.6);
+
+    // Thêm icon chấm đỏ nhỏ báo hiệu cần phục vụ (Optional)
+    &::after {
+      content: '!';
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: red;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
+  }
+}
+
+.reset-btn{
+  width: 100%;
+  margin-top: 5px;
+  background-color: #607d8b;
+  color: #fff;
+  padding: 12px 0;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: background 0.3s ease;
+
+  &:hover {
+    background-color: #546e7a;
+  }
+}
+
+@keyframes pulse-orange {
+  0% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(255, 152, 0, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0); }
+}
+
+/* --- NOTIFICATION BOX --- */
+.notification-box {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background-color: #333;
+  color: #fff;
+  padding: 16px 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  z-index: 9999;
+  font-size: 1rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  animation: slideInUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  &::before {
+    content: '🔔';
+    font-size: 1.2rem;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -418,7 +491,7 @@
 
   .menu-panel,
   .details-panel {
-    width: 100%;
+    width: 90%;
     height: auto;
   }
 

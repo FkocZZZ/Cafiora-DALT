@@ -1,0 +1,153 @@
+revenue-page {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  color: #222;
+}
+
+.revenue-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+  }
+}
+
+/* Controls row: summary + filters */
+.revenue-controls {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.summary {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  background: #fff;
+  border: 1px solid #e6e6e6;
+  padding: 14px 18px;
+  border-radius: 8px;
+  min-width: 220px;
+  box-shadow: 0 4px 12px rgba(16,24,40,0.03);
+
+  .summary-label {
+    font-size: 0.85rem;
+    color: #606f7b;
+  }
+  .summary-value {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #1f2937;
+  }
+}
+
+/* Filters */
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+
+  label {
+    font-size: 0.85rem;
+    color: #4b5563;
+  }
+
+  .filter-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+
+    input[type="date"] {
+      border: 1px solid #d1d5db;
+      padding: 8px 10px;
+      border-radius: 6px;
+      background: #fff;
+      font-size: 0.95rem;
+      color: #111827;
+    }
+
+    .dash {
+      color: #9ca3af;
+      padding: 0 4px;
+    }
+
+    .btn {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      &:hover {
+        background: #10b981;
+        color: white;
+      }
+    }
+
+    .reset {
+      background: #2563eb;
+      color: #fff;
+    }
+  }
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .revenue-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filters {
+    align-items: stretch;
+    .filter-controls {
+      justify-content: space-between;
+      input[type="date"] {
+        width: 48%;
+      }
+    }
+  }
+}
+//=============Calendar===============
+.date-btn {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  min-width: 110px;
+  &:hover {
+    background-color: rgba(0, 0, 0 ,0.1);
+  }
+}
+.date-btn:focus {
+  outline: 2px solid #4c9ffe;
+  outline-offset: 2px;
+}
+.calendar-popup {
+  position: absolute;
+  top: 18%;
+  left: 72%;
+  width: 330px;
+  height: 40%;
+  z-index: 10;
+}
+
+.calendar-overlay {
+  position: fixed;
+  inset: 0;
+  background: transparent;
+  z-index: 9;
+}

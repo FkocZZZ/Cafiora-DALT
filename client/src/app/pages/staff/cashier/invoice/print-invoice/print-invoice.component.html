@@ -1,6 +1,10 @@
 <div class="wrapper">
 
-  <aside class="order-list">
+  <aside class="sidebar">
+    
+  </aside>
+
+  <section class="order-list">
     <h2>Order List</h2>
 
     @for (order of orders$ | async; track order.orderId) {
@@ -8,11 +12,15 @@
         <h3>Order ID: {{order.orderId}}</h3>
         <p>Table {{order.tableNumber}} - {{order.customerName}}</p>
         <time>Created: {{order.createdAt | date: "dd/MM/yyyy '-' hh:mm a"}}</time>
-        <p>Status: <strong style="color: crimson">{{ order.isPaided === true ? 'Paid' : 'Unpaid' }}</strong></p>
+        <p>Status: 
+          <strong [ngClass]="order.isPaid ? 'status-paid' : 'status-unpaid'">
+            {{ order.isPaid === true ? 'Paid' : 'Unpaid' }}
+          </strong>
+        </p>
       </article>
     }
 
-  </aside>
+  </section>
 
   <section class="order-detail">
     <h2>Order Detail</h2>
@@ -25,7 +33,7 @@
             <p><strong>Order ID: </strong>{{selectedOrder.orderId}}</p>
             <p><strong>Table: </strong>{{selectedOrder.tableNumber}}</p>
             <p><strong>Customer Name: </strong>{{selectedOrder.customerName}}</p>
-            <p><strong>Status: </strong>{{selectedOrder.isPaided ? 'Paid' : 'Unpaid'}}</p>
+            <p><strong>Status: </strong>{{selectedOrder.isPaid ? 'Paid' : 'Unpaid'}}</p>
             <p><strong>Assigned Waiter: </strong>{{selectedOrder.employee.username}}</p>
             <p><strong>Note: </strong>{{selectedOrder.note}}</p>
           </header>
@@ -68,7 +76,7 @@
             </tr>
           </tfoot>
         </table>
-        <button>Checkout</button>
+        <button (click)="checkout()">Checkout</button>
         
       </article>
     }
@@ -79,4 +87,11 @@
     <p>Please select order to view details</p>
   }
   </section>
+
+  @if (toastMessage) {
+    <div class="custom-snackbar centered">
+      <span class="snack-message">{{toastMessage}}</span>
+      <button class="snack-close" (click)="closeToast()" aria-label="Close">Close</button>
+    </div>
+  }
 </div>

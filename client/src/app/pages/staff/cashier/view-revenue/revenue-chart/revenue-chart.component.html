@@ -1,0 +1,13 @@
+<section class="revenue-chart">
+  <h2>Chart doanh thu 7 ngày gần nhất</h2>
+  <div class="chart-wrapper">
+    <canvas
+      baseChart
+      [data]="chartData()"
+      [type]="'line'"
+      [options]="chartOptions"
+      aria-label="Biểu đồ doanh thu 7 ngày"
+      role="img">
+    </canvas>
+  </div>
+</section>

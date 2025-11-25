@@ -10,7 +10,7 @@ export interface OrderModel {
     email: string;
   };
   status: boolean;
-  isPaided: boolean;
+  isPaid: boolean;
   note: string;
   orderDetailId: string;
   createdAt?: string;
@@ -23,6 +23,7 @@ export interface OrderDetailModel {
   orderId: string;
   items: {
     productId: string;
+    productName: string;
     quantity: number;
     subtotal: number;
     unitPrice: number;

@@ -1,88 +1,58 @@
-<header class="header">
-  <a [routerLink]="['/home']"><h1 class="logo"><strong>CAFIORA</strong></h1></a>
-</header>
-
-<nav class="wrapper">
-  <div class="toggle-container" (click)="toggleMode()">
-    <div class="toggle-button" [class.right]="status() === 'completed'"></div>
-
-    <div class="toggle-label new" [class.active]="status() === 'new'">
-      <a routerLink="/barista/new" routerLinkActive="active" (click)="$event.stopPropagation()">
-        New
-      </a>
+ <main>
+  @if (showNewOrderMessage) {
+    <div class="notification-box">
+      🔔 Có đơn hàng mới!
     </div>
-
-    <div class="toggle-label completed" [class.active]="status() === 'completed'">
-      <a routerLink="/barista/completed" routerLinkActive="active" (click)="$event.stopPropagation()">
-        Completed
-      </a>
-    </div>
-
-  </div>
-</nav>
-
-<main>
-  @if (status() === 'new') {
-    <h2>New Order</h2>
   }
 
-  @if (status() === 'completed') {
+  @if (status() === 'new') {
+    <h2>New Order</h2>
+  } @else {
     <h2>Completed Order</h2>
   }
 
+  <div class="grid-container">
+    @for (order of filteredOrdersForGrid; track order.orderId) {
+      <div class="order-card"
+           [class.active]="activeOrderId === order.orderId"
+           (click)="toggleOrder(order.orderId)">
 
-  <div class="container">
-    <table class="order-table"> 
-      <col style="width: 9%;"> <!--Order ID-->
-      <col style="width: 10%;"> <!--Time Created-->
-      <col style="width: 11%;"> <!--Drinks-->
-      <col style="width: 6%;"> <!--Quantity-->
-      <col style="width: 5%;"> <!--Table Number-->
-      <col style="width: 7%;"> <!--Status-->
-      <col style="width: 12%;"> <!--Customer Name-->
-      <col style="width: 17%;"> <!--Note-->
-      <col style="width: 4%;"> <!--Done Button-->
+        <div class="card-header">
+          <div class="table-number">Bàn {{ order.tableNumber }}</div>
+          <div class="time-info">
+            <span>{{ order.createdAt | date: 'HH:mm' }}</span>
+            <span class="customer-name">Customer Name : {{ order.customerName || 'Khách' }}</span>
+          </div>
+        </div>
 
-      <thead>
+        @if (activeOrderId === order.orderId) {
+          <div class="card-body" (click)="$event.stopPropagation()">
+            <hr>
+            <div class="items-list">
+              @for (detail of order.orderDetails; track $index) {
+                @for (item of detail.items; track $index) {
+                  <div class="item-row">
+                    <span class="qty">{{ item.quantity }}x</span>
+                    <span class="name">{{ getProductName(item) }}</span>
+                  </div>
+                }
+              }
+            </div>
 
-        <tr>
-          <th>Order ID</th>
-          <th>Time Created</th>
-          <th>Drinks</th>
-          <th>Quantity</th>
-          <th>Table</th>
-          <th>Status</th>
-          <th>Customer Name</th>
-          <th>Note</th>
-          <th>Done</th>
-        </tr>
-
-      </thead>
-      <tbody>
-
-        @for (row of filteredTableRows; track $index) {
-          <tr>
-            <td>{{row.orderId}}</td>
-            <td>{{row.createdAt | date: "dd/MM/yyyy '-' hh:mm a"}}</td>
-            <td>{{row.productName}}</td>
-            <td>{{row.quantity}}</td>
-            <td>{{row.tableNumber}}</td>
-            <td>{{row.status}}</td>
-            <td>{{row.customerName}}</td>
-            <td>{{row.note}}</td>
-            @if (status() === 'new') {
-              <td>
-                <button (click)="markDone(row)">Done</button>
-              </td>
-            } @else {
-              <td>
-                Done
-              </td>
+            @if (order.note) {
+              <div class="note">Note: {{ order.note }}</div>
             }
-          </tr>
-        }
 
-      </tbody>
-    </table>
+            @if (status() === 'new') {
+              <button class="done-btn" (click)="markDone(order, $event)">
+                Hoàn tất
+              </button>
+            }
+          </div>
+        }
+      </div>
+    } @empty {
+      <div class="empty-state">Hiện không có đơn hàng nào.</div>
+    }
   </div>
 </main>

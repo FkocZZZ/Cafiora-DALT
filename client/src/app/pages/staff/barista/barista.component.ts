@@ -1,184 +1,143 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { OrderDetailModel, OrderModel } from '../../../model/order.model';
-import { forkJoin, map, Observable } from 'rxjs';
+import { Component, inject, OnInit, OnDestroy, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule, DatePipe } from '@angular/common';
+import { HeaderComponent } from '../../header/header.component';
 import { OrderService } from '../../../services/order.service';
+import { OrderModel } from '../../../model/order.model';
+import { interval, Subject, switchMap, takeUntil, startWith } from 'rxjs';
 
 @Component({
   selector: 'app-barista',
-  imports: [RouterLink, DatePipe, CommonModule, RouterLinkActive],
+  standalone: true,
+  imports: [DatePipe, CommonModule],
   templateUrl: './barista.component.html',
   styleUrl: './barista.component.scss'
 })
-export class BaristaComponent implements OnInit {
+export class BaristaComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private http = inject(HttpClient);
-
   private orderService = inject(OrderService);
 
-  orders: OrderModel[] = [];
+  orders: any[] = [];
   status = signal<'new' | 'completed'>('new');
-  currentTab: string = 'new';
 
-  tableRows: Array<{
-    orderId: string;
-    createdAt: number;
-    tableNumber: number;
-    status: boolean;
-    customerName: string;
-    note: string;
-    quantity: number;
-    productId: string;
-    productName: string;
-    rowKey: string;
-  }> = [];
+  activeOrderId: string | null = null;
+  showNewOrderMessage: boolean = false;
+
+  private destroy$ = new Subject<void>();
+
+  private previousOrderIds: Set<string> = new Set();
+  private isFirstLoad = true;
 
   constructor() {
     this.route.paramMap.subscribe(params => {
       const param = (params.get('status') as 'new' | 'completed') || 'new';
       this.status.set(param);
+      this.activeOrderId = null;
     });
   }
 
   ngOnInit(): void {
-    this.getOrderDetailId();
-    
-    this.loadOrdersWithDetails();
-    this.getDetail('69058f5d0d8233402768ab4f');
-  }
-
-  // getDetail(id: string) {
-  //   this.http.get(`http://localhost:8000/api/barista/getOrderDetail/${id}`).subscribe({next: res => console.log(res)})
-  // }
-
-  toggleMode() {
-    const next = this.status() === 'new' ? 'completed' : 'new';
-    this.router.navigate(['/barista', next]);
-  }
-
-  getOrderDetailId() {
-    this.orderService.getAllOrders().subscribe({
-      next: res => {
-        if (res && Array.isArray(res)) {
-          const orderDetailIds = res.map(order => order.orderDetailId);
-          // console.log(orderDetailIds);
-          const orderDetailRequests = orderDetailIds.map(id => this.orderService.getOrderDetail(id));
-
-          forkJoin(orderDetailRequests).subscribe({
-            next: orderDetails => {
-              console.log(orderDetails);
-            },
-            error: (err) => {
-            console.error('Lỗi khi lấy chi tiết đơn hàng:', err);
-          }
-          })
-        }
-
-      },
-      error: (err) => console.error('Lỗi khi lấy dữ liệu đơn hàng:', err)
-    })
-  }
-
-  loadOrdersWithDetails(): void {
-    this.orderService.getAllOrdersWithDetails().subscribe({
-      next: (orders: any[]) => {
-        this.orders = orders;
-        this.buildTableRows(orders);
-      },
-      error: (err) => {
-        console.error('Lỗi khi lấy chi tiết đơn hàng:', err);
-      }
-    });
-  }
-
-  // Helper: lấy id/name (và có thể cả price/image) từ item.productId (string hoặc object)
-  private resolveItemProduct(item: any): { id: string; name: string } {
-    const prod = item?.productId ?? item?.product_id;
-    // debug khi cấu trúc không như mong đợi
-    if (!prod) {
-      // console.warn('resolveItemProduct: missing product for item', item);
-      return { id: '', name: '' };
-    }
-    if (typeof prod === 'string') {
-      // nếu chỉ có id, trả id và để name rỗng (có thể fetch sau nếu cần)
-      return { id: prod, name: '' };
-    }
-    // support nhiều tên trường khác nhau
-    const name = prod.nameProduct ?? prod.productName ?? prod.name ?? '';
-    if (!name) console.warn('resolveItemProduct: product object has no name field', prod);
-    return {
-      id: prod._id ?? prod.id ?? '',
-      name
-    };
-  }
-
-   private buildTableRows(orders: any[]) {
-    this.tableRows = orders.flatMap(order =>
-      (order?.orderDetails ?? []).flatMap((detail: any, detailIndex: number) =>
-        (detail?.items ?? []).map((item: any, itemIndex: number) => {
-          const p = this.resolveItemProduct(item);
-          const rowKey = `${order.orderId}-${p.id || 'no-id'}-${detailIndex}-${itemIndex}`;
-          return {
-            orderId: order.orderId,
-            createdAt: order.createdAt ?? '',
-            tableNumber: order.tableNumber,
-            status: order.status,
-            customerName: order.customerName,
-            note: order.note,
-            quantity: item.quantity,
-            productId: p.id,
-            productName: p.name,
-            rowKey
-          };
-        })
+    interval(5000)
+      .pipe(
+        startWith(0),
+        switchMap(() => this.orderService.getAllOrdersWithDetails()),
+        takeUntil(this.destroy$)
       )
-    );
-  }
-
-  get filteredTableRows() {
-    const targetStatus = this.status() === 'completed';
-    return this.tableRows.filter(row => row.status === targetStatus);
-  }
-
-  // dùng rowKey để cập nhật local state cho chắc
-  markDone(row: any) {
-    if (!row?.rowKey) {
-      console.warn('markDone: missing rowKey, cannot update reliably', row);
-      return;
-    }
-    const i = this.tableRows.findIndex(r => r.rowKey === row.rowKey);
-    if (i === -1) {
-      console.warn('markDone: row not found for rowKey', row.rowKey);
-      return;
-    }
-    this.tableRows[i] = { ...this.tableRows[i], status: true };
-    console.log('Marked done (local):', this.tableRows[i]);
-  }
-
-
-
-  getDetail(id: string) {
-    const token = localStorage.getItem('accessToken') || '';
-    const headers = { Authorization: `Bearer ${token}` };
-
-    this.http.get(`http://localhost:8000/api/barista/getOrderDetail/${id}`, { headers })
       .subscribe({
-        next: res => console.log(res),
-        error: err => console.error('Lỗi lấy chi tiết đơn hàng:', err)
+        next: (orders: any[]) => {
+          this.handleIncomingData(orders);
+        },
+        error: (err) => console.error('Lỗi auto-refresh:', err)
       });
   }
 
-
-
-
-  // helper debug: log tất cả items không có productName
-  logMissingProductNames() {
-    const misses = this.tableRows.filter(r => !r.productName);
-    console.log('items missing productName:', misses);
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
+  private handleIncomingData(newOrders: any[]) {
+    if (!this.isFirstLoad && this.status() === 'new') {
+      const currentIds = newOrders.filter(o => !o.status).map(o => o.orderId);
+      const hasNew = currentIds.some(id => !this.previousOrderIds.has(id));
 
+      if (hasNew) {
+        this.triggerNotification();
+      }
+      this.previousOrderIds = new Set(currentIds);
+    } else {
+      const currentIds = newOrders.filter(o => !o.status).map(o => o.orderId);
+      this.previousOrderIds = new Set(currentIds);
+      this.isFirstLoad = false;
+    }
+    this.orders = newOrders;
+  }
+
+  triggerNotification() {
+    this.showNewOrderMessage = true;
+    // Tự tắt sau 3 giây
+    setTimeout(() => {
+      this.showNewOrderMessage = false;
+    }, 3000);
+  }
+
+  get filteredOrdersForGrid() {
+    const isCompleted = this.status() === 'completed';
+    return this.orders.filter(o => o.status === isCompleted);
+  }
+
+  toggleOrder(id: string) {
+    if (this.activeOrderId === id) {
+      this.activeOrderId = null;
+    } else {
+      this.activeOrderId = id;
+    }
+  }
+
+  markDone(orderData: any, event?: Event) {
+    if(event) event.stopPropagation(); // Ngăn click lan ra ngoài
+
+    const orderId = orderData?.orderId;
+    if (!orderId) return;
+
+    this.orderService.updateOrderStatus(orderId, { status: true }).subscribe({
+      next: () => {
+        // --- XỬ LÝ UI NGAY LẬP TỨC ---
+
+        // 1. Tìm và cập nhật status trong mảng local (để Grid tự filter mất đi)
+        const index = this.orders.findIndex(o => o.orderId === orderId);
+        if (index !== -1) {
+          // Cách 1: Xóa hẳn khỏi mảng (nếu muốn biến mất hoàn toàn)
+          this.orders[index].status = true;
+
+          // Cách 2 (Optional): Nếu muốn xóa khỏi mảng luôn thì dùng splice:
+          // this.orders.splice(index, 1);
+        }
+
+        // 2. Nếu đang mở bàn đó thì đóng lại
+        if (this.activeOrderId === orderId) {
+          this.activeOrderId = null;
+        }
+
+        // 3. Cập nhật lại set ID để polling lần sau không báo "đơn mới" nhầm
+        if (this.previousOrderIds.has(orderId)) {
+          this.previousOrderIds.delete(orderId);
+        }
+
+        // console.log("Đã hoàn tất đơn:", orderId);
+      },
+      error: (err) => console.error("Lỗi update:", err)
+    });
+  }
+
+  // Helper lấy tên món
+  getProductName(item: any): string {
+    const prod = item?.productId ?? item?.product_id;
+    if (!prod) return 'Unknown';
+    if (typeof prod === 'string') return 'Unknown';
+    return prod.nameProduct ?? prod.productName ?? prod.name ?? '';
+  }
 }
