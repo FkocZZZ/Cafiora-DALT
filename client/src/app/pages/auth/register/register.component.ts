@@ -33,8 +33,14 @@ export class RegisterComponent implements OnInit {
   }
 
   onSubmit() {
-    if (!this.username || !this.email || !this.password || !this.confirmPassword || !this.role) {
+    if (!this.username || !this.email || !this.password || !this.confirmPassword) {
       alert('Vui lòng nhập đầy đủ thông tin');
+      return;
+    }
+
+    // Validate riêng cho Cashier: Bắt buộc phải chọn role
+    if (this.currentRole === 'cashier' && !this.role) {
+      alert('Vui lòng chọn chức vụ (Role) cho nhân viên mới');
       return;
     }
 
@@ -47,19 +53,32 @@ export class RegisterComponent implements OnInit {
       username: this.username,
       email: this.email,
       password: this.password,
-      role: 'user',
+      role: this.role, // Giá trị này đã được xử lý ở ngOnInit hoặc dropdown
     };
 
     this.authService.register(data).subscribe({
       next: (res) => {
-        console.log('register success:', res);
-        alert('Account created successfully!');
-        this.router.navigate(['/login']);
+        alert('Đăng ký thành công!');
+
+        if (this.currentRole !== 'cashier') {
+          this.router.navigate(['/login']);
+        } else {
+          this.resetForm();
+        }
       },
       error: (err) => {
-        console.log('register error:', err);
+        console.error(err);
         alert(err.error?.message || 'Đăng ký thất bại');
       }
     });
+  }
+
+  resetForm(){
+    this.username = '';
+    this.email = '';
+    this.password = '';
+    this.confirmPassword = '';
+    this.role = this.currentRole === 'cashier' ? '' : 'user';
+
   }
 }

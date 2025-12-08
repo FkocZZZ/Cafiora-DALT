@@ -179,6 +179,14 @@ main {
       font-size: 1.3rem;
       border-bottom: 1px solid #eee;
       padding-bottom: 5px;
+      transition: opacity 0.3s ease;
+
+      .item-info {
+        display: flex;
+        align-items: center;
+        flex: 1;
+        position: relative;
+      }
 
       .qty {
         font-weight: 800;
@@ -187,9 +195,73 @@ main {
         min-width: 40px;
       }
       .name {
-        text-align: right;
+        flex: 1;
         font-weight: 500;
         word-break: break-word;
+      }
+
+      // Nút hoàn tất từng món
+      .complete-item-btn {
+        width: 35px;
+        height: 35px;
+        border: none;
+        border-radius: 50%;
+        background-color: #4caf50;
+        color: white;
+        font-size: 1.2rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        margin-left: 10px;
+        flex-shrink: 0;
+
+        &:hover {
+          background-color: #45a049;
+          transform: scale(1.1);
+        }
+        &:active {
+          transform: scale(0.95);
+        }
+      }
+
+      // Món đã hoàn tất - gạch ngang
+      &.completed {
+        opacity: 0.6;
+
+        .item-info {
+          &::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 50%;
+            height: 2px;
+            background-color: #333;
+            transform: translateY(-50%);
+          }
+        }
+
+        .qty, .name {
+          text-decoration: line-through;
+        }
+      }
+
+      // Gạch ngang cho món đã hoàn thành (khi showCompletedItems = true)
+      &.strikethrough {
+        .strikethrough-text {
+          text-decoration: line-through;
+          color: #666;
+        }
+        
+        .completed-mark {
+          color: #4caf50;
+          font-weight: bold;
+          margin-left: 8px;
+        }
       }
     }
 
@@ -218,12 +290,23 @@ main {
       box-shadow: 0 4px 6px rgba(0,0,0,0.2);
       transition: all 0.2s;
 
-      &:hover {
+      &:hover:not(.disabled) {
         background-color: #5ce68b;
         transform: scale(1.02);
       }
-      &:active {
+      &:active:not(.disabled) {
         transform: scale(0.98);
+      }
+
+      &.disabled {
+        background-color: #ccc;
+        color: #666;
+        cursor: not-allowed;
+        opacity: 0.5;
+
+        &:hover {
+          transform: none;
+        }
       }
     }
   }
@@ -261,4 +344,29 @@ main {
 @keyframes slideIn {
   from { transform: translateX(100%); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
+}
+
+.view-toggle {
+  margin-bottom: 20px;
+  text-align: center;
+
+  .toggle-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 1rem;
+    color: #333;
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .toggle-text {
+      font-weight: 500;
+    }
+  }
 }

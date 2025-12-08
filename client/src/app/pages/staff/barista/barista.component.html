@@ -1,4 +1,4 @@
- <main>
+<main>
   @if (showNewOrderMessage) {
     <div class="notification-box">
       🔔 Có đơn hàng mới!
@@ -6,22 +6,39 @@
   }
 
   @if (status() === 'new') {
-    <h2>New Order</h2>
+    <h2>Đơn Hàng Mới</h2>
+    <div class="view-toggle">
+      <label class="toggle-label">
+        <input type="checkbox" [(ngModel)]="showCompletedItems">
+        <span class="toggle-text">Hiển thị món đã làm với gạch ngang</span>
+      </label>
+    </div>
   } @else {
-    <h2>Completed Order</h2>
+    <h2>Lịch Sử Đơn</h2>
   }
 
   <div class="grid-container">
-    @for (order of filteredOrdersForGrid; track order.orderId) {
+    @for (order of filteredOrders; track order.orderId) {
       <div class="order-card"
            [class.active]="activeOrderId === order.orderId"
+           [class.has-pending-items]="!areAllItemsCompleted(order)"
+           [class.all-completed]="areAllItemsCompleted(order)"
            (click)="toggleOrder(order.orderId)">
 
         <div class="card-header">
-          <div class="table-number">Bàn {{ order.tableNumber }}</div>
+          <div class="table-number">
+            Bàn {{ order.tableNumber }}
+            @if (hasNewItems(order)) {
+              <span class="new-badge">MỚI</span>
+            }
+          </div>
           <div class="time-info">
             <span>{{ order.createdAt | date: 'HH:mm' }}</span>
-            <span class="customer-name">Customer Name : {{ order.customerName || 'Khách' }}</span>
+            <span class="customer-name">{{ order.customerName || 'Khách' }}</span>
+            <div class="progress-info">
+              <span class="completed">✓{{ getCompletedItemsCount(order) }}</span>
+              <span class="pending">⏳{{ getPendingItemsCount(order) }}</span>
+            </div>
           </div>
         </div>
 
@@ -29,23 +46,49 @@
           <div class="card-body" (click)="$event.stopPropagation()">
             <hr>
             <div class="items-list">
-              @for (detail of order.orderDetails; track $index) {
-                @for (item of detail.items; track $index) {
-                  <div class="item-row">
-                    <span class="qty">{{ item.quantity }}x</span>
-                    <span class="name">{{ getProductName(item) }}</span>
+              @for (item of getCachedSortedItems(order); track getItemId(item)) {
+                
+                <div class="item-row" 
+                     [class.completed]="isItemCompleted(order, item)"
+                     [class.strikethrough]="isItemCompleted(order, item) && showCompletedItems">
+                  <div class="item-info">
+                    <span class="qty">x{{ item.quantity }}</span> 
+                    <span class="name" [class.strikethrough-text]="isItemCompleted(order, item) && showCompletedItems">
+                      {{ getProductName(item) }}
+                    </span>
+                    @if (showCompletedItems && item.completedCount > 0) {
+                      <span class="progress-info">
+                        <span class="completed-mark">✓{{ item.completedCount }}</span>
+                        @if (item.pendingCount > 0) {
+                          <span class="pending-mark">⏳{{ item.pendingCount }}</span>
+                        }
+                      </span>
+                    }
+                    @if (isItemCompleted(order, item) && showCompletedItems) {
+                      <span class="completed-mark">✓ HOÀN TẤT</span>
+                    }
                   </div>
-                }
+                  
+                  @if (status() === 'new' && !isItemCompleted(order, item)) {
+                    <button class="complete-item-btn" (click)="markItemCompleted(order, item, $event)">
+                      ✓
+                    </button>
+                  }
+                </div>
+
               }
             </div>
 
             @if (order.note) {
-              <div class="note">Note: {{ order.note }}</div>
+              <div class="note">Ghi chú: {{ order.note }}</div>
             }
 
             @if (status() === 'new') {
-              <button class="done-btn" (click)="markDone(order, $event)">
-                Hoàn tất
+              <button class="done-btn" 
+                      [class.disabled]="!areAllItemsCompleted(order)"
+                      [disabled]="!areAllItemsCompleted(order)"
+                      (click)="markDone(order, $event)">
+                Hoàn tất đơn
               </button>
             }
           </div>

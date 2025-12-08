@@ -27,7 +27,7 @@ export class PrintInvoiceComponent implements OnInit {
   toastMessage: string | null = null;
   private toastTimer?: any;
 
-  orders$: Observable<OrderModel[]> = this.orderService.getAllOrders()
+  orders$: Observable<OrderModel[]> = this.orderService.getAllOrdersWithDetailsForCashier()
   .pipe(
     tap(o => console.log('orders$ emitted', o))
   );

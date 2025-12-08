@@ -38,7 +38,6 @@ export class AuthService {
     );
   }
 
-  // Khi đăng nhập thành công, bạn cần gọi hàm này
   saveToken(token: string) {
     localStorage.setItem('accessToken', token);
   }
