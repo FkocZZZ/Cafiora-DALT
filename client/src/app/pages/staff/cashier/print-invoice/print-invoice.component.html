@@ -1,0 +1,146 @@
+<div class="history-controls">
+
+  <div class="filter-radios" role="radiogroup" aria-label="Trạng thái">
+    <label><input type="radio" name="status"
+        [checked]="statusFilter() === 'all'"
+        (change)="setStatusFilter('all')"/>
+       All
+      </label>
+    <label><input type="radio" name="status"
+        [checked]="statusFilter() === 'paid'"
+        (change)="setStatusFilter('paid')"/>
+       Paid
+      </label>
+    <label><input type="radio" name="status"
+        [checked]="statusFilter() === 'unpaid'"
+        (change)="setStatusFilter('unpaid')"/>
+       Unpaid
+      </label>
+  </div>
+
+  <div class="filters">
+    <label for="dateRange">Bộ lọc thời gian</label>
+    <div class="filter-controls">
+      <button
+        type="button"
+        class="date-btn"
+        (click)="toggleCalendar()"
+        [attr.aria-expanded]="calendarOpen() ? 'true' : 'false'"
+        aria-haspopup="dialog"
+        aria-label="Chọn ngày"
+      >
+        {{ (selectedDate() ?? today) | date:'MMM d':'':'en-US' }}
+      </button>
+
+      @if (calendarOpen()) {
+        <div class="calendar-overlay" (click)="calendarOpen.set(false)">
+          <div class="calendar-popup" (click)="$event.stopPropagation()">
+            <app-calendar
+              [selected]="selectedDate() ?? today"
+              (select)="onCalendarSelect($event)"
+            />
+          </div>
+        </div>
+      }
+
+      <button class="btn reset" type="button" (click)="reset()">Đặt lại</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="history-layout">
+  <aside class="orders-list">
+    <h3>Orders ({{ filteredOrders.length || 0 }})</h3>
+    @if (loading) {
+      <div class="loading">Loading...</div>
+    }
+    @if (!loading && error) {
+      <div class="error"> {{error}}</div>
+    }
+
+    @if (!loading && !error && filteredOrders.length) {
+      @for (o of filteredOrders; track o.orderId) {
+        <div class="order-card">
+          <details>
+            <summary class="order-summary" (click)="selectOrder(o)">
+              <span class="col id">#{{ o.orderId }}</span>
+              <span class="col date">{{ o.createdAt | date:'yyyy-MM-dd' }}</span>
+              <span class="col table">Table {{ o.tableNumber }}</span>
+              <span class="col customer">{{ o.customerName || '—' }}</span>
+              <span class="col total">{{ calcTotal(o) | currency:'VND':'symbol' }}</span>
+              <span class="col status" 
+                [class.paid]="o.isPaid === true"
+                [class.unpaid]="o.isPaid !== true">
+                {{ o.isPaid ? 'Paid' : 'Unpaid'}}
+              </span>
+            </summary>
+          </details>
+        </div>
+      }
+    } @else {
+      @if (!loading && !error) {
+        <div class="empty">Không có đơn nào.</div>
+      }
+    }
+  </aside>
+
+  <section class="order-detail">
+    <h3>Chi tiết đơn (mẫu)</h3>
+
+    @if (selectedOrder()) {
+      <div class="detail-card">
+        <div class="meta">
+          <div><strong>ID: </strong>{{ selectedOrder()?.orderId }}</div>
+          <div><strong>Ngày: </strong>{{ selectedOrder()?.createdAt | date:'yyyy-MM-dd' }}</div>
+          <div><strong>Bàn: </strong>{{ selectedOrder()?.tableName }}1</div>
+          <div><strong>Khách: </strong>{{ selectedOrder()?.customerName || '—' }}</div>
+          <div><strong>Trạng thái: </strong>
+            <span class="status"
+              [class.paid]="selectedOrder().isPaid === true"
+              [class.unpaid]="selectedOrder().isPaid !== true">
+              {{ selectedOrder().isPaid ? 'Paid' : 'Unpaid' }}
+            </span>
+          </div>
+          <div><strong>Waiter: </strong>{{ selectedOrder()?.employee.username || '—' }}</div>
+          <div><strong>Note:</strong> {{ selectedOrder()?.note || '—' }}</div>
+        </div>
+
+        @if (getItems(selectedOrder()).length) {
+          <table class="detail-table">
+            <thead>
+              <tr><th>STT</th><th>Sản phẩm</th><th>SL</th><th>Đơn giá</th><th>Thành tiền</th></tr>
+            </thead>
+            <tbody>
+              @for (it of getItems(selectedOrder()); track $index) {
+                <tr>
+                  <td>{{ $index + 1}}</td>
+                  <td>{{ it.productName }}</td>
+                  <td>{{ it.quantity }}</td>
+                  <td>{{ it.unitPrice | currency:'VND':'symbol' }}</td>
+                  <td>{{ (it.quantity * it.unitPrice) | currency:'VND':'symbol' }}</td>
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="4" class="text-right">Total</td>
+                <td>{{ calcTotal(selectedOrder()) | currency:'VND':'symbol' }}</td>
+              </tr>
+            </tfoot>
+          </table>
+          <button (click)="checkout()">Checkout</button>
+        }
+      </div>
+    } @else {
+      <div class="empty">Choose one order to view detail.</div>
+    }
+  </section>
+</div>
+
+@if (toastMessage) {
+    <div class="custom-snackbar centered">
+      <span class="snack-message">{{toastMessage}}</span>
+      <button class="snack-close" (click)="closeToast()" aria-label="Close">Close</button>
+    </div>
+  }
