@@ -1,102 +1,192 @@
-<div class="container">
+<div class="waiter-container">
+  <!-- Main Content Area -->
+  <div class="main-content">
+    
+    <!-- LEFT: Thực đơn -->
+    <main class="left-panel menu-panel">
+      <section class="section menu-section">
+        <h3 class="section-title">
+          <span class="icon">☕</span>
+          Thực đơn
+          <span class="badge-count">{{ products.length }} món</span>
+        </h3>
+        
+        <div *ngIf="loading" class="loading-state">
+          <div class="spinner"></div>
+          <p>Đang tải thực đơn...</p>
+        </div>
 
-  <!-- PANEL TRÁI: DANH SÁCH MÓN -->
-  <div class="menu-panel">
-    <h2>Thực Đơn</h2>
-    <div class="product-grid">
-      <div class="card" *ngFor="let p of products" (click)="selectProduct(p)">
-        <img [src]="p.urlImage" [alt]="p.nameProduct" (error)="onImgError($event)">
-        <h3>{{ p.nameProduct }}</h3>
-        <p class="price">{{ p.price | number:'1.0-0' }} ₫</p>
-        <span [class.active]="p.status" [class.inactive]="!p.status"></span>
-      </div>
-    </div>
-  </div>
-
-  <!-- PANEL PHẢI: GIỎ HÀNG + CHỌN BÀN -->
-  <div class="details-panel">
-    <h2>
-      Chi Tiết Giỏ Hàng
-      <span *ngIf="selectedTable" class="table-indicator"> - Bàn {{ selectedTable }}</span>
-    </h2>
-
-    <!-- Giỏ hàng scrollable -->
-    <div class="cart-list-wrapper">
-      <div *ngIf="cart.length; else emptyCart" class="cart-list">
-        <div class="cart-item" *ngFor="let item of cart">
-          <img [src]="item.product.urlImage" (error)="onImgError($event)">
-          <div class="info">
-            <h4>{{ item.product.nameProduct }}</h4>
-            <p>{{ item.product.price | number:'1.0-0' }} ₫</p>
-            <div class="quantity">
-              <button (click)="decreaseQuantity(item)">-</button>
-              <span>{{ item.quantity }}</span>
-              <button (click)="increaseQuantity(item)">+</button>
+        <div *ngIf="!loading && products.length > 0" class="menu-grid">
+          <div *ngFor="let p of products" 
+               class="menu-item"
+               [class.disabled]="!p.status"
+               (click)="p.status ? selectProduct(p) : null">
+            <div class="item-image">
+              <img [src]="p.urlImage" [alt]="p.nameProduct" (error)="onImgError($event)">
+              <span *ngIf="!p.status" class="out-of-stock">Hết hàng</span>
+            </div>
+            <div class="item-details">
+              <h4 class="item-name">{{ p.nameProduct }}</h4>
+              <p class="item-price">{{ p.price | number:'1.0-0' }}₫</p>
+              <button class="add-btn" *ngIf="p.status">
+                <span>+</span> Thêm
+              </button>
             </div>
           </div>
         </div>
-      </div>
-      <ng-template #emptyCart>
-        <p class="placeholder-text">Chưa có món nào được chọn.</p>
-      </ng-template>
-    </div>
 
-    <!-- Bottom Section cố định đáy -->
-    <div class="bottom-section">
+        <div *ngIf="!loading && products.length === 0" class="empty-state">
+          <span class="empty-icon">📭</span>
+          <p>Không có sản phẩm nào</p>
+        </div>
+      </section>
+    </main>
 
+    <!-- CENTER: Chọn bàn + Thông tin khách hàng -->
+    <aside class="center-panel">
       <!-- Chọn bàn -->
-      <div class="table-selection">
-        <h3>Chọn bàn</h3>
-        <div class="table-grid-wrapper">
-          <div class="table-grid">
-            <div *ngFor="let t of tables"
-                 class="table-box"
-                 [ngClass]="{ 'selected': tableStatus[t] }"
-                 (click)="selectTable(t)">
-              Bàn {{ t }}
+      <section class="section table-section">
+        <h3 class="section-title">
+          <span class="icon">🪑</span>
+          Chọn bàn
+          <span *ngIf="selectedTable" class="badge-selected">Bàn {{ selectedTable }}</span>
+        </h3>
+        <div class="table-grid">
+          <div *ngFor="let t of tables"
+               class="table-card"
+               [class.selected]="selectedTable === t"
+               [class.pending]="tableStatus[t] && !completedTables[t]"
+               [class.completed]="completedTables[t]"
+               (click)="selectTable(t)">
+            <div class="table-number">{{ t }}</div>
+            <div class="table-status">
+              <span *ngIf="!tableStatus[t]">Trống</span>
+              <span *ngIf="tableStatus[t] && !completedTables[t]">Chờ</span>
+              <span *ngIf="completedTables[t]">Xong</span>
             </div>
           </div>
-          <button *ngIf="selectedTable" (click)="resetCurrentTable()" class="reset-btn">
-            Hoàn tất bàn hiện tại
+        </div>
+        <button *ngIf="selectedTable" 
+                (click)="exitTable()" 
+                class="exit-table-btn">
+          <span>↩️</span> Thoát bàn {{ selectedTable }}
+        </button>
+      </section>
+
+      <!-- Thông tin khách hàng -->
+      <section class="section customer-section" *ngIf="selectedTable">
+        <h3 class="section-title">
+          <span class="icon">👤</span>
+          Thông tin khách
+        </h3>
+        <div class="customer-form">
+          <div class="form-group">
+            <label>Tên khách hàng</label>
+            <input type="text" 
+                   [(ngModel)]="customerName" 
+                   placeholder="VD: Nguyễn Văn A"
+                   class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Ghi chú đặc biệt</label>
+            <textarea [(ngModel)]="note" 
+                      placeholder="VD: Không đá, ít đường..."
+                      class="form-textarea"
+                      rows="2"></textarea>
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <!-- RIGHT: Giỏ hàng -->
+    <aside class="right-panel">
+      <section class="section cart-section">
+        <h3 class="section-title">
+          <span class="icon">🛒</span>
+          Giỏ hàng
+          <span class="badge-count">{{ totalItems }} món</span>
+        </h3>
+
+        <!-- Cart Items -->
+        <div class="cart-items-wrapper">
+          <div *ngIf="cart.length > 0; else emptyCart" class="cart-items">
+            <div *ngFor="let item of cart; let i = index" class="cart-item">
+              <div class="item-info">
+                <img [src]="item.product.urlImage" 
+                     [alt]="item.product.nameProduct"
+                     (error)="onImgError($event)"
+                     class="item-thumb">
+                <div class="item-text">
+                  <h5>{{ item.product.nameProduct }}</h5>
+                  <p class="item-price">{{ item.product.price | number:'1.0-0' }}₫</p>
+                </div>
+              </div>
+              <div class="item-controls">
+                <button (click)="decreaseQuantity(item)" class="qty-btn minus">−</button>
+                <span class="qty-value">{{ item.quantity }}</span>
+                <button (click)="increaseQuantity(item)" class="qty-btn plus">+</button>
+              </div>
+              <div class="item-subtotal">
+                {{ (item.product.price * item.quantity) | number:'1.0-0' }}₫
+              </div>
+            </div>
+          </div>
+          <ng-template #emptyCart>
+            <div class="empty-cart">
+              <span class="empty-icon">🍽️</span>
+              <p>Giỏ hàng trống</p>
+              <small>Chọn món từ thực đơn</small>
+            </div>
+          </ng-template>
+        </div>
+
+        <!-- Cart Summary -->
+        <div class="cart-summary" *ngIf="cart.length > 0">
+          <div class="summary-row">
+            <span>Tổng số món:</span>
+            <strong>{{ totalItems }}</strong>
+          </div>
+          <div class="summary-row total">
+            <span>Tổng tiền:</span>
+            <strong class="total-price">{{ totalPrice | number:'1.0-0' }}₫</strong>
+          </div>
+          <button class="submit-order-btn" 
+                  (click)="submitOrder()"
+                  [disabled]="!selectedTable">
+            <span *ngIf="selectedTable">✓ Xác nhận đặt món</span>
+            <span *ngIf="!selectedTable">⚠️ Chọn bàn trước</span>
           </button>
         </div>
+      </section>
+    </aside>
+
+  </div>
+
+  <!-- Popup xác nhận -->
+  <div class="popup-overlay" *ngIf="showConfirmPopup" (click)="closePopup()">
+    <div class="popup-dialog" (click)="$event.stopPropagation()">
+      <div class="popup-header">
+        <h3>⚠️ Xác nhận</h3>
       </div>
-
-
-      <!-- Tên khách hàng -->
-      <div class="customer-name-section">
-        <h3>Tên khách hàng</h3>
-        <input type="text" [(ngModel)]="customerName" placeholder="Nhập tên khách hàng"/>
+      <div class="popup-body">
+        <p>{{ popupMessage }}</p>
       </div>
-
-      <!-- Ghi chú + tổng kết + nút xác nhận -->
-      <div class="cart-summary">
-        <div class="summary-row">
-          <p><strong>Tổng số món:</strong> {{ totalItems }}</p>
-          <p><strong>Tổng tiền:</strong> {{ totalPrice | number:'1.0-0' }} ₫</p>
-        </div>
-        <div class="bottom-row">
-          <textarea [(ngModel)]="note" placeholder="Ghi chú (VD: Không đá, ít đường...)" rows="2"></textarea>
-          <button class="submit-btn" (click)="submitOrder()">Xác nhận đặt</button>
-        </div>
-
+      <div class="popup-actions">
+        <button class="btn-danger" (click)="onPopupOk()">
+          🗑️ Khách đã rời đi
+        </button>
+        <button class="btn-primary" (click)="onPopupCancel()">
+          👁️ Xem order cũ
+        </button>
       </div>
-
-      <!-- Confirm Popup -->
-      <div class="popup-overlay" *ngIf="showConfirmPopup">
-        <div class="popup-content">
-          <p class="popup-message">{{ popupMessage }}</p>
-          <div class="popup-actions">
-            <button class="ok-btn" (click)="onPopupOk()">OK</button>
-            <button class="cancel-btn" (click)="onPopupCancel()">Xem order cũ</button>
-          </div>
-        </div>
-      </div>
-
-
-
-
-
     </div>
   </div>
+
+  <!-- Notification -->
+  <div class="notification-toast" *ngIf="showMessage" [class.show]="showMessage">
+    <span class="notification-icon">🔔</span>
+    <span class="notification-text">{{ messageText }}</span>
+  </div>
 </div>
+
+

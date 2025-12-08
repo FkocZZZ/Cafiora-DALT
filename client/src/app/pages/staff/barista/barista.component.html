@@ -1,88 +1,101 @@
-<header class="header">
-  <a [routerLink]="['/home']"><h1 class="logo"><strong>CAFIORA</strong></h1></a>
-</header>
-
-<nav class="wrapper">
-  <div class="toggle-container" (click)="toggleMode()">
-    <div class="toggle-button" [class.right]="status() === 'completed'"></div>
-
-    <div class="toggle-label new" [class.active]="status() === 'new'">
-      <a routerLink="/barista/new" routerLinkActive="active" (click)="$event.stopPropagation()">
-        New
-      </a>
-    </div>
-
-    <div class="toggle-label completed" [class.active]="status() === 'completed'">
-      <a routerLink="/barista/completed" routerLinkActive="active" (click)="$event.stopPropagation()">
-        Completed
-      </a>
-    </div>
-
-  </div>
-</nav>
-
 <main>
+  @if (showNewOrderMessage) {
+    <div class="notification-box">
+      🔔 Có đơn hàng mới!
+    </div>
+  }
+
   @if (status() === 'new') {
-    <h2>New Order</h2>
+    <h2>Đơn Hàng Mới</h2>
+    <div class="view-toggle">
+      <label class="toggle-label">
+        <input type="checkbox" [(ngModel)]="showCompletedItems">
+        <span class="toggle-text">Hiển thị món đã làm với gạch ngang</span>
+      </label>
+    </div>
+  } @else {
+    <h2>Lịch Sử Đơn</h2>
   }
 
-  @if (status() === 'completed') {
-    <h2>Completed Order</h2>
-  }
+  <div class="grid-container">
+    @for (order of filteredOrders; track order.orderId) {
+      <div class="order-card"
+           [class.active]="activeOrderId === order.orderId"
+           [class.has-pending-items]="!areAllItemsCompleted(order)"
+           [class.all-completed]="areAllItemsCompleted(order)"
+           (click)="toggleOrder(order.orderId)">
 
-
-  <div class="container">
-    <table class="order-table"> 
-      <col style="width: 9%;"> <!--Order ID-->
-      <col style="width: 10%;"> <!--Time Created-->
-      <col style="width: 11%;"> <!--Drinks-->
-      <col style="width: 6%;"> <!--Quantity-->
-      <col style="width: 5%;"> <!--Table Number-->
-      <col style="width: 7%;"> <!--Status-->
-      <col style="width: 12%;"> <!--Customer Name-->
-      <col style="width: 17%;"> <!--Note-->
-      <col style="width: 4%;"> <!--Done Button-->
-
-      <thead>
-
-        <tr>
-          <th>Order ID</th>
-          <th>Time Created</th>
-          <th>Drinks</th>
-          <th>Quantity</th>
-          <th>Table</th>
-          <th>Status</th>
-          <th>Customer Name</th>
-          <th>Note</th>
-          <th>Done</th>
-        </tr>
-
-      </thead>
-      <tbody>
-
-        @for (row of filteredTableRows; track $index) {
-          <tr>
-            <td>{{row.orderId}}</td>
-            <td>{{row.createdAt | date: "dd/MM/yyyy '-' hh:mm a"}}</td>
-            <td>{{row.productName}}</td>
-            <td>{{row.quantity}}</td>
-            <td>{{row.tableNumber}}</td>
-            <td>{{row.status}}</td>
-            <td>{{row.customerName}}</td>
-            <td>{{row.note}}</td>
-            @if (status() === 'new') {
-              <td>
-                <button (click)="markDone(row)">Done</button>
-              </td>
-            } @else {
-              <td>
-                Done
-              </td>
+        <div class="card-header">
+          <div class="table-number">
+            Bàn {{ order.tableNumber }}
+            @if (hasNewItems(order)) {
+              <span class="new-badge">MỚI</span>
             }
-          </tr>
-        }
+          </div>
+          <div class="time-info">
+            <span>{{ order.createdAt | date: 'HH:mm' }}</span>
+            <span class="customer-name">{{ order.customerName || 'Khách' }}</span>
+            <div class="progress-info">
+              <span class="completed">✓{{ getCompletedItemsCount(order) }}</span>
+              <span class="pending">⏳{{ getPendingItemsCount(order) }}</span>
+            </div>
+          </div>
+        </div>
 
-      </tbody>
-    </table>
+        @if (activeOrderId === order.orderId) {
+          <div class="card-body" (click)="$event.stopPropagation()">
+            <hr>
+            <div class="items-list">
+              @for (item of getCachedSortedItems(order); track getItemId(item)) {
+                
+                <div class="item-row" 
+                     [class.completed]="isItemCompleted(order, item)"
+                     [class.strikethrough]="isItemCompleted(order, item) && showCompletedItems">
+                  <div class="item-info">
+                    <span class="qty">x{{ item.quantity }}</span> 
+                    <span class="name" [class.strikethrough-text]="isItemCompleted(order, item) && showCompletedItems">
+                      {{ getProductName(item) }}
+                    </span>
+                    @if (showCompletedItems && item.completedCount > 0) {
+                      <span class="progress-info">
+                        <span class="completed-mark">✓{{ item.completedCount }}</span>
+                        @if (item.pendingCount > 0) {
+                          <span class="pending-mark">⏳{{ item.pendingCount }}</span>
+                        }
+                      </span>
+                    }
+                    @if (isItemCompleted(order, item) && showCompletedItems) {
+                      <span class="completed-mark">✓ HOÀN TẤT</span>
+                    }
+                  </div>
+                  
+                  @if (status() === 'new' && !isItemCompleted(order, item)) {
+                    <button class="complete-item-btn" (click)="markItemCompleted(order, item, $event)">
+                      ✓
+                    </button>
+                  }
+                </div>
+
+              }
+            </div>
+
+            @if (order.note) {
+              <div class="note">Ghi chú: {{ order.note }}</div>
+            }
+
+            @if (status() === 'new') {
+              <button class="done-btn" 
+                      [class.disabled]="!areAllItemsCompleted(order)"
+                      [disabled]="!areAllItemsCompleted(order)"
+                      (click)="markDone(order, $event)">
+                Hoàn tất đơn
+              </button>
+            }
+          </div>
+        }
+      </div>
+    } @empty {
+      <div class="empty-state">Hiện không có đơn hàng nào.</div>
+    }
   </div>
 </main>

@@ -43,7 +43,6 @@ export const routes: Routes = [
       { path: 'view-revenue', component: ViewRevenueComponent },
       { path: 'print-invoice', component: PrintInvoiceComponent },
       { path: 'edit-drink', component: EditDrinkComponent }
-
     ]
    },
   { path: '**', redirectTo: 'home' },

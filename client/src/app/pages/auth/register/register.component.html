@@ -30,8 +30,8 @@
           <!-- Chỉ hiển thị dropdown nếu người login là cashier -->
           <select *ngIf="currentRole === 'cashier'" [(ngModel)]="role" name="role" required>
             <option value="" disabled selected>Select Role</option>
-            <option value="user">Barister</option>
-            <option value="cashier">Waiter</option>
+            <option value="barista">Barista</option>
+            <option value="waiter">Waiter</option>
           </select>
 
           <input type="password" placeholder="Password" [(ngModel)]="password" name="password" required />

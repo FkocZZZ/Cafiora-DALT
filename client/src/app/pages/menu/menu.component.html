@@ -1,21 +1,36 @@
 <div class="sort-controls">
-  <label>
-    Lọc theo loại:
-    <select [(ngModel)]="selectedCategory" class="selectType" (change)="filterProducts()">
+  <!-- Ô tìm kiếm -->
+  <div class="control-item search-box">
+    <label>Tìm thức uống:</label>
+    <input
+      type="text"
+      [(ngModel)]="searchKeyword"
+      (input)="filterProducts()"
+      placeholder="Ameriacano, Latte, Trà sữa..."
+    />
+  </div>
+
+  <!-- Lọc loại -->
+  <div class="control-item">
+    <label>Loại:</label>
+    <select [(ngModel)]="selectedCategory" (change)="filterProducts()">
       <option value="">Tất cả</option>
       <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
     </select>
-  </label>
+  </div>
 
-  <label>
-    Sắp xếp theo giá:
-    <select [(ngModel)]="selectedPriceSort" class="selectType" (change)="filterProducts()">
+  <!-- Sort giá -->
+  <div class="control-item">
+    <label>Giá:</label>
+    <select [(ngModel)]="selectedPriceSort" (change)="filterProducts()">
       <option value="">Mặc định</option>
-      <option value="asc">Giá thấp → cao</option>
-      <option value="desc">Giá cao → thấp</option>
+      <option value="asc">Thấp → Cao</option>
+      <option value="desc">Cao → Thấp</option>
     </select>
-  </label>
+  </div>
+
 </div>
+
 
 <div *ngIf="loading" class="loading-state">
   <p>Đang tải thực đơn...</p>
@@ -26,7 +41,6 @@
 </div>
 
 <div *ngIf="!loading && !error" class="menu-wrapper">
-  <h2 class="menu-heading">☕ Hôm nay bạn muốn dùng gì nhỉ ? </h2>
 
   <div class="product-grid">
     <div class="product-card" *ngFor="let p of filteredProducts" (click)="selectProduct(p)">

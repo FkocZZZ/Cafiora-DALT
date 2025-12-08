@@ -17,7 +17,7 @@ interface Product{
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FooterComponent],
+  imports: [CommonModule],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss'],
 })

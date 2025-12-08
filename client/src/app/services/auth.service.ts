@@ -18,6 +18,14 @@ export class AuthService {
 
   constructor(private http: HttpClient) {}
 
+  // ------------------ TOKEN HELPER ------------------
+  private getAuthHeaders(): HttpHeaders {
+    const token = localStorage.getItem('accessToken') || '';
+    return new HttpHeaders({
+      Authorization: `Bearer ${token}`
+    });
+  }
+
   // ------------------ AUTH ------------------
   login(email: string, password: string): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(
@@ -30,45 +38,49 @@ export class AuthService {
     );
   }
 
+  saveToken(token: string) {
+    localStorage.setItem('accessToken', token);
+  }
+
+  // ------------------ REGISTER ------------------
   register(data: any): Observable<any> {
-    const token = localStorage.getItem('accessToken') || '';
-    const headers = new HttpHeaders({
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    });
-    return this.http.post(`${this.apiUrlCashier}/cashierRegister`, data, {
-      headers,
-      withCredentials: true
-    });
+    const headers = this.getAuthHeaders().set('Content-Type', 'application/json');
+
+    return this.http.post(
+      `${this.apiUrlCashier}/cashierRegister`,
+      data,
+      { headers, withCredentials: true }
+    );
   }
 
   // ------------------ PRODUCT ------------------
   getAllProducts(): Observable<any> {
-    const token = localStorage.getItem('accessToken') || '';
-    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
-    return this.http.get(`${this.apiUrlCashier.replace('/cashier','')}/getProduct`, { headers });
+    return this.http.get(
+      `${this.apiUrlCashier.replace('/cashier', '')}/getProduct`,
+      { headers: this.getAuthHeaders() }
+    );
   }
 
-
-
   uploadProduct(formData: FormData): Observable<any> {
-    const token = localStorage.getItem('accessToken') || '';
-    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
-    return this.http.post(`${this.apiUrlCashier}/uploadProduct`, formData, { headers });
+    return this.http.post(
+      `${this.apiUrlCashier}/uploadProduct`,
+      formData,
+      { headers: this.getAuthHeaders() }
+    );
   }
 
   updateProduct(id: string, formData: FormData): Observable<any> {
-    const token = localStorage.getItem('accessToken') || '';
-    const headers = { Authorization: `Bearer ${token}` }; // object bình thường, đừng dùng HttpHeaders nếu override
-
-    return this.http.put(`${this.apiUrlCashier}/updateProduct/${id}`, formData, { headers });
+    return this.http.put(
+      `${this.apiUrlCashier}/updateProduct/${id}`,
+      formData,
+      { headers: this.getAuthHeaders() }
+    );
   }
 
   deleteProduct(id: string): Observable<any> {
-    const token = localStorage.getItem('accessToken') || '';
-    const headers = { Authorization: `Bearer ${token}` };
-    return this.http.delete(`${this.apiUrlCashier}/deleteProduct/${id}`, { headers });
+    return this.http.delete(
+      `${this.apiUrlCashier}/deleteProduct/${id}`,
+      { headers: this.getAuthHeaders() }
+    );
   }
-
-
 }
