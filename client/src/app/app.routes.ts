@@ -11,8 +11,9 @@ import { CashierComponent } from './pages/staff/cashier/cashier.component';
 import { WaiterComponent } from './pages/staff/waiter/waiter.component';
 import { CreateAccountComponent } from './pages/staff/cashier/create-account/create-account.component';
 import { ViewRevenueComponent } from './pages/staff/cashier/view-revenue/view-revenue.component';
-import { PrintInvoiceComponent } from './pages/staff/cashier/invoice/print-invoice/print-invoice.component';
+import { PrintInvoiceComponent } from './pages/staff/cashier/print-invoice/print-invoice.component';
 import {EditDrinkComponent} from './pages/staff/cashier/edit-drink/edit-drink.component';
+
 export const routes: Routes = [
   {
     path: '',
