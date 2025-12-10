@@ -186,4 +186,9 @@ export class OrderService {
   updateOrderStatus(orderId: string, body: any) {
     return this.http.put(`${this.baseUrl}/updateOrderStatus/${orderId}`, body);
   }
+
+  // Cashier payment update endpoint
+  updatePaymentStatus(orderId: string, body: any) {
+    return this.http.put(`http://localhost:8000/api/cashier/payment/${orderId}`, body);
+  }
 }

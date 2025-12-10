@@ -221,6 +221,10 @@ export class WaiterComponent implements OnInit, OnDestroy {
 
       this.selectedTable = t;
       this.ensureTableData(t);
+      
+      // RESET EXISTING QUANTITY MAP cho bàn mới
+      this.existingQuantityMap.clear();
+      
       this.tableStatus[t] = true;
       this.loadExistingOrder(t);
       this.saveLocal();
@@ -315,7 +319,6 @@ export class WaiterComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // ✅ FIX: CHỈ GỬI MÓN MỚI HOẶC SỐ LƯỢNG TĂNG THÊM
     const existingProductIds = this.getExistingProductIds(this.selectedTable);
     const itemsToSubmit: any[] = [];
 
@@ -358,7 +361,6 @@ export class WaiterComponent implements OnInit, OnDestroy {
       headers: { Authorization: `Bearer ${token}` }
     }).subscribe({
       next: (res: any) => {
-        console.log('✅ Order created:', res);
         alert(res.message || 'Đặt đơn thành công!');
 
         this.completedTables[this.selectedTable!] = false;
@@ -366,10 +368,9 @@ export class WaiterComponent implements OnInit, OnDestroy {
         this.previousServerStatus[this.selectedTable!] = false;
         if (res.order?._id) this.tableOrderIds[this.selectedTable!] = res.order._id;
 
-        // Thông báo cho Barista về đơn mới (nếu bàn đã có món hoàn thành trước đó)
         const hadPreviousItems = this.getCompletedItemsCountForTable(this.selectedTable!) > 0;
         if (hadPreviousItems) {
-          console.log(`🆕 Table ${this.selectedTable} added new items to existing order with completed items`);
+          console.log(`Table ${this.selectedTable} added new items to existing order with completed items`);
           console.log(`   - Previously completed items: ${hadPreviousItems}`);
           console.log(`   - New items added: ${itemsToSubmit.length}`);
         }
@@ -386,7 +387,6 @@ export class WaiterComponent implements OnInit, OnDestroy {
   }
 
   private getExistingProductIds(tableNumber: number): Set<string> {
-    // ✅ FIX: TẠO MAP ĐỂ THEO DÕI SỐ LƯỢNG ĐÃ ORDER
     const productQuantityMap = new Map<string, number>();
     
     const ordersForTable = this.lastAllOrdersData.filter((item: any) => 
@@ -395,7 +395,6 @@ export class WaiterComponent implements OnInit, OnDestroy {
       !this.ignoredOrders.includes(item.order._id)
     );
     
-    // Đếm tổng số lượng đã order của từng sản phẩm
     for (const orderData of ordersForTable) {
       const items = orderData.orderDetail?.items || [];
       for (const item of items) {
@@ -406,14 +405,7 @@ export class WaiterComponent implements OnInit, OnDestroy {
         productQuantityMap.set(productId, currentQty + quantity);
       }
     }
-    
-    console.log(`🔍 [getExistingProductIds] Table ${tableNumber} existing products:`, 
-      Array.from(productQuantityMap.entries()));
-    
-    // Lưu map để sử dụng trong submitOrder()
     this.existingQuantityMap = productQuantityMap;
-    
-    // Trả về Set rỗng để cho phép order bất kỳ món nào
     return new Set<string>();
   }
 
@@ -429,14 +421,33 @@ export class WaiterComponent implements OnInit, OnDestroy {
         let hasChanges = false;
 
         this.tables.forEach(t => {
+          // KIỂM TRA XEM CÓ ORDER NÀO VỪA ĐƯỢC THANH TOÁN KHÔNG (bỏ qua filter isPayment)
+          const allOrdersForTable = allOrders.filter((item: any) => 
+            item.order.table_number === t && 
+            !this.ignoredOrders.includes(item.order._id)
+          );
+          
+          // Tìm order vừa được thanh toán
+          const paidOrder = allOrdersForTable.find((item: any) => 
+            item.order.isPayment === true && 
+            this.tableStatus[t] === true // Bàn đang phục vụ nhưng vừa được thanh toán
+          );
+          
+          if (paidOrder) {
+            console.log(`[WAITER] 💰 Phát hiện bàn ${t} vừa thanh toán!`);
+            
+            // Hiển thị thông báo thanh toán 3 giây
+            this.showTemporaryMessage(`🎉 Bàn ${t} đã thanh toán thành công! Đang reset bàn về trạng thái mới...`, 3000);
+            
+            // Reset hoàn toàn thông tin bàn
+            this.resetSpecificTable(t);
+            return;
+          }
+          
+          // Logic cũ cho các bàn chưa thanh toán
           const orderFound = this.getLatestValidOrder(allOrders, t);
 
           if (orderFound) {
-            if (orderFound.order.isPayment === true) {
-              console.log(`[WAITER] Bàn ${t} đã thanh toán`);
-              this.resetSpecificTable(t);
-              return;
-            }
 
             this.tableOrderIds[t] = orderFound.order._id;
             if (!this.tableStatus[t]) {
@@ -477,10 +488,12 @@ export class WaiterComponent implements OnInit, OnDestroy {
   // Method này đã được bỏ, chỉ dùng exitTable()
 
   resetSpecificTable(t: number) {
-    // Tìm TẤT CẢ orders của bàn này và thêm vào ignored list
+    console.log(`🧹 [RESET] Bắt đầu reset hoàn toàn bàn ${t}...`);
+    
+    // THÊM TẤT CẢ ORDERS (bao gồm cả đã thanh toán) vào ignored list để không load lại
     if (this.lastAllOrdersData.length > 0) {
       this.lastAllOrdersData
-        .filter((item: any) => item.order.table_number === t && item.order.isPayment === false)
+        .filter((item: any) => item.order.table_number === t) // Bỏ filter isPayment để ignore tất cả orders
         .forEach((item: any) => {
           if (!this.ignoredOrders.includes(item.order._id)) {
             this.ignoredOrders.push(item.order._id);
@@ -493,20 +506,39 @@ export class WaiterComponent implements OnInit, OnDestroy {
       }
     }
 
-    // Clear table data
-    delete this.cartByTable[t];
-    delete this.tableOrderIds[t];
-    delete this.previousServerStatus[t];
-    this.tableStatus[t] = false;
-    this.completedTables[t] = false;
+    // ❌ CLEAR HOÀN TOÀN TẤT CẢ DỮ LIỆU CỦA BÀN ❌
+    delete this.cartByTable[t];           // Xóa giỏ hàng
+    delete this.tableOrderIds[t];         // Xóa order IDs
+    delete this.previousServerStatus[t];  // Xóa server status cũ
+    this.tableStatus[t] = false;          // Đặt bàn về trống
+    this.completedTables[t] = false;      // Reset completed status
+    
+    // Clear existing quantity map để không nhớ món cũ
+    this.existingQuantityMap.clear();
     
     // Clear Barista completed items through service
     this.baristaStatusService.clearCompletedItemsForTable(t);
 
+    // FORCE RESET - Tạo lại table data hoàn toàn mới
+    this.ensureTableData(t);
+    this.cartByTable[t] = { cart: [], note: '', customerName: '' };
+
     this.saveLocal();
-    if (this.selectedTable === t) this.selectedTable = null;
-    this.showTemporaryMessage(`Đã hoàn tất bàn ${t}.`);
-    setTimeout(() => this.checkRealtimeStatus(), 200);
+    
+    // Nếu đang chọn bàn này thì bỏ chọn
+    if (this.selectedTable === t) {
+      this.selectedTable = null;
+    }
+    
+    console.log(`✅ [RESET] Bàn ${t} đã được reset hoàn toàn - trạng thái mới tinh!`);
+    
+    // Hiển thị thông báo xác nhận reset
+    setTimeout(() => {
+      this.showTemporaryMessage(`✨ Bàn ${t} đã sẵn sàng cho khách hàng mới!`, 2000);
+    }, 500);
+    
+    // Refresh data sau khi reset
+    setTimeout(() => this.checkRealtimeStatus(), 1000);
   }
 
   // Thoát khỏi bàn hiện tại (không xóa dữ liệu)
@@ -555,8 +587,6 @@ export class WaiterComponent implements OnInit, OnDestroy {
     this.popupResolve = null;
     this.popupTableNumber = null;
   }
-
-  // ===== BARISTA STATUS INTEGRATION =====
   
   // Kiểm tra bàn có món đang được làm không
   isTableBeingPrepared(tableNumber: number): boolean {
