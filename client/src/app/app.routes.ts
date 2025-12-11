@@ -13,6 +13,7 @@ import { CreateAccountComponent } from './pages/staff/cashier/create-account/cre
 import { ViewRevenueComponent } from './pages/staff/cashier/view-revenue/view-revenue.component';
 import { PrintInvoiceComponent } from './pages/staff/cashier/print-invoice/print-invoice.component';
 import {EditDrinkComponent} from './pages/staff/cashier/edit-drink/edit-drink.component';
+import { ManageStaffComponent } from './pages/staff/cashier/manage-staff/manage-staff.component';
 
 export const routes: Routes = [
   {
@@ -42,7 +43,8 @@ export const routes: Routes = [
       { path: 'create-account', component: CreateAccountComponent },
       { path: 'view-revenue', component: ViewRevenueComponent },
       { path: 'print-invoice', component: PrintInvoiceComponent },
-      { path: 'edit-drink', component: EditDrinkComponent }
+      { path: 'edit-drink', component: EditDrinkComponent },
+      { path: 'manage-staff', component: ManageStaffComponent },
     ]
    },
   { path: '**', redirectTo: 'home' },

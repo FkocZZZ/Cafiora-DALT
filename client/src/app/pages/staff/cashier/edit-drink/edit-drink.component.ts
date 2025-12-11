@@ -26,6 +26,7 @@ export class EditDrinkComponent implements OnInit {
   editForm: FormGroup;
   selectedProductId: string | null = null;
   errorMessage: string = '';
+  successMessage: string = '';
   loading: boolean = false;
 
   constructor(private authService: AuthService, private fb: FormBuilder) {
@@ -57,7 +58,7 @@ export class EditDrinkComponent implements OnInit {
   // --------- Upload mới ---------
   uploadProduct() {
     if (!this.editForm.value.nameProduct || !this.editForm.value.price || !this.selectedFile) {
-      this.errorMessage = 'Vui lòng nhập đầy đủ thông tin và chọn ảnh';
+      this.showErrorMessage('Vui lòng nhập đầy đủ thông tin và chọn ảnh');
       return;
     }
 
@@ -72,15 +73,15 @@ export class EditDrinkComponent implements OnInit {
       next: (res) => {
         console.log(res);
         this.loadProducts();
-        this.editForm.reset();
-        this.selectedFile = null;
+        this.resetForm();
         this.loading = false;
+        this.showSuccessMessage(`✅ Đã thêm món "${this.editForm.value.nameProduct}" thành công!`);
       },
       error: (err) => {
         console.error(err);
         this.loading = false;
+        this.showErrorMessage('❌ Có lỗi xảy ra khi thêm món. Vui lòng thử lại!');
       }
-
     });
   }
 
@@ -95,12 +96,13 @@ export class EditDrinkComponent implements OnInit {
 
   updateProduct() {
     if (!this.selectedProductId) {
-      this.errorMessage = 'Chọn sản phẩm để cập nhật';
+      this.showErrorMessage('Vui lòng chọn sản phẩm để cập nhật');
       return;
     }
 
+    const productName = this.editForm.value.nameProduct;
     const formData = new FormData();
-    formData.append('nameProduct', this.editForm.value.nameProduct);
+    formData.append('nameProduct', productName);
     formData.append('price', this.editForm.value.price);
     formData.append('category', this.editForm.value.category);
     if (this.selectedFile) formData.append('image', this.selectedFile);
@@ -110,28 +112,62 @@ export class EditDrinkComponent implements OnInit {
       next: (res) => {
         console.log(res);
         this.loadProducts();
-        this.editForm.reset();
-        this.selectedFile = null;
-        this.selectedProductId = null;
+        this.resetForm();
         this.loading = false;
+        this.showSuccessMessage(`Đã cập nhật món "${productName}" thành công!`);
       },
       error: (err) => {
         console.error(err)
         this.loading = false;
+        this.showErrorMessage('Có lỗi xảy ra khi cập nhật món. Vui lòng thử lại!');
       }
     });
   }
 
   // --------- Delete sản phẩm ---------
   deleteProduct(productId: string) {
-    if (!confirm('Bạn có chắc muốn xóa sản phẩm này?')) return;
+    const product = this.products.find(p => p._id === productId);
+    if (!confirm(`Bạn có chắc muốn xóa món "${product?.nameProduct}"?`)) return;
 
     this.authService.deleteProduct(productId).subscribe({
       next: (res) => {
         console.log(res);
         this.loadProducts();
+        // Reset form nếu đang chỉnh sửa sản phẩm bị xóa
+        if (this.selectedProductId === productId) {
+          this.resetForm();
+        }
+        this.showSuccessMessage(`Đã xóa món "${product?.nameProduct}" thành công!`);
       },
-      error: (err) => console.error(err)
+      error: (err) => {
+        console.error(err);
+        this.showErrorMessage('Có lỗi xảy ra khi xóa món. Vui lòng thử lại!');
+      }
     });
+  }
+
+  // Helper methods for messages
+  showSuccessMessage(message: string) {
+    this.successMessage = message;
+    this.errorMessage = '';
+    setTimeout(() => {
+      this.successMessage = '';
+    }, 3000);
+  }
+
+  showErrorMessage(message: string) {
+    this.errorMessage = message;
+    this.successMessage = '';
+    setTimeout(() => {
+      this.errorMessage = '';
+    }, 3000);
+  }
+
+  resetForm() {
+    this.editForm.reset();
+    this.selectedFile = null;
+    this.selectedProductId = null;
+    this.errorMessage = '';
+    this.successMessage = '';
   }
 }

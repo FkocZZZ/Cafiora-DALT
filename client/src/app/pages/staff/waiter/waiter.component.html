@@ -69,7 +69,7 @@
         <button *ngIf="selectedTable" 
                 (click)="exitTable()" 
                 class="exit-table-btn">
-          <span>↩️</span> Thoát bàn {{ selectedTable }}
+          <span>↩</span> Thoát bàn {{ selectedTable }}
         </button>
       </section>
 
@@ -133,7 +133,7 @@
           </div>
           <ng-template #emptyCart>
             <div class="empty-cart">
-              <span class="empty-icon">🍽️</span>
+              <span class="empty-icon"></span>
               <p>Giỏ hàng trống</p>
               <small>Chọn món từ thực đơn</small>
             </div>
@@ -153,8 +153,8 @@
           <button class="submit-order-btn" 
                   (click)="submitOrder()"
                   [disabled]="!selectedTable">
-            <span *ngIf="selectedTable">✓ Xác nhận đặt món</span>
-            <span *ngIf="!selectedTable">⚠️ Chọn bàn trước</span>
+            <span *ngIf="selectedTable">Xác nhận đặt món</span>
+            <span *ngIf="!selectedTable">Chọn bàn trước</span>
           </button>
         </div>
       </section>
@@ -166,17 +166,17 @@
   <div class="popup-overlay" *ngIf="showConfirmPopup" (click)="closePopup()">
     <div class="popup-dialog" (click)="$event.stopPropagation()">
       <div class="popup-header">
-        <h3>⚠️ Xác nhận</h3>
+        <h3>Xác nhận</h3>
       </div>
       <div class="popup-body">
         <p>{{ popupMessage }}</p>
       </div>
       <div class="popup-actions">
         <button class="btn-danger" (click)="onPopupOk()">
-          🗑️ Khách đã rời đi
+          Khách đã rời đi
         </button>
         <button class="btn-primary" (click)="onPopupCancel()">
-          👁️ Xem order cũ
+         Xem order cũ
         </button>
       </div>
     </div>
@@ -184,7 +184,7 @@
 
   <!-- Notification -->
   <div class="notification-toast" *ngIf="showMessage" [class.show]="showMessage">
-    <span class="notification-icon">🔔</span>
+    <span class="notification-icon"></span>
     <span class="notification-text">{{ messageText }}</span>
   </div>
 </div>

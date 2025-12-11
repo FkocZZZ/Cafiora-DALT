@@ -1,0 +1,116 @@
+<div class="staff-management">
+  <!-- Header -->
+  <div class="page-header">
+    <h2>Quản lý nhân viên</h2>
+    <div class="controls">
+      <div class="search-wrapper">
+        <input type="text" 
+               placeholder="Tìm kiếm nhân viên..." 
+               [(ngModel)]="searchTerm"
+               (input)="filterStaff()"
+               class="search-input">
+        <i class="fas fa-search"></i>
+      </div>
+      <select [(ngModel)]="selectedRole" (change)="filterStaff()" class="role-filter">
+        <option value="">Tất cả vai trò</option>
+        <option value="cashier">Thu ngân</option>
+        <option value="barista">Pha chế</option>
+        <option value="waiter">Phục vụ</option>
+        <option value="user">Khách hàng</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="successMessage" class="message success">
+    {{ successMessage }}
+  </div>
+  <div *ngIf="error" class="message error">
+    {{ error }}
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading">Đang tải...</div>
+
+  <!-- Staff List -->
+  <div class="staff-list" *ngIf="!loading">
+    <div class="table-container">
+      <table class="staff-table">
+        <thead>
+          <tr>
+            <th>Tên đăng nhập</th>
+            <th>Email</th>
+            <th>Vai trò</th>
+            <th width="80">Thao tác</th>
+          </tr>
+        </thead>
+        
+        <tbody>
+          <tr *ngFor="let staff of paginatedStaffList; trackBy: trackByStaffId">
+            <td>{{ staff.username }}</td>
+            <td>{{ staff.email }}</td>
+            <td>
+              <span class="role" [ngClass]="'role-' + staff.role">
+                {{ getRoleDisplayName(staff.role) }}
+              </span>
+            </td>
+            <td>
+              <button class="delete-btn" 
+                      (click)="openDeleteModal(staff)"
+                      title="Xóa nhân viên">
+                Xóa
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Empty State -->
+      <div *ngIf="filteredStaffList.length === 0" class="no-data">
+        <p>{{ searchTerm ? 'Không tìm thấy nhân viên phù hợp' : 'Chưa có dữ liệu nhân viên' }}</p>
+      </div>
+    </div>
+
+    <!-- Fixed Pagination -->
+    <div class="pagination-fixed">
+      <span class="pagination-info">
+        <span *ngIf="filteredStaffList.length > itemsPerPage">
+          Trang {{ currentPage }}/{{ totalPages }} - {{ filteredStaffList.length }} nhân viên
+        </span>
+        <span *ngIf="filteredStaffList.length <= itemsPerPage && filteredStaffList.length > 0">
+          {{ filteredStaffList.length }} nhân viên
+        </span>
+        <span *ngIf="filteredStaffList.length === 0">
+          Không có nhân viên
+        </span>
+      </span>
+      <div class="pagination-buttons" *ngIf="filteredStaffList.length > itemsPerPage">
+        <button [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">Trước</button>
+        <span class="page-display">{{ currentPage }}</span>
+        <button [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">Sau</button>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- Delete Modal -->
+  <div class="modal-overlay" *ngIf="showDeleteModal" (click)="closeDeleteModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h3>Xác nhận xóa</h3>
+      <div class="modal-content">
+        <p>Bạn có chắc chắn muốn xóa nhân viên <strong>{{ staffToDelete?.username }}</strong>?</p>
+        <p class="warning">Hành động này không thể hoàn tác!</p>
+        
+        <div *ngIf="error" class="error-msg">{{ error }}</div>
+      </div>
+      
+      <div class="modal-buttons">
+        <button class="cancel-btn" (click)="closeDeleteModal()">Hủy</button>
+        <button class="confirm-btn" (click)="confirmDelete()" [disabled]="loading">
+          {{ loading ? 'Đang xóa...' : 'Xóa' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

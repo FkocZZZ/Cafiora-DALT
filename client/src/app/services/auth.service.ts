@@ -83,4 +83,30 @@ export class AuthService {
       { headers: this.getAuthHeaders() }
     );
   }
+
+  // ------------------ USER MANAGEMENT ------------------
+  getAllUsers(): Observable<any> {
+    return this.http.get(
+      `${this.apiUrlCashier}/getAllUser`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  updateUser(id: string, userData: any): Observable<any> {
+    return this.http.put(
+      `${this.apiUrlCashier}/updateUser/${id}`,
+      userData,
+      { 
+        headers: this.getAuthHeaders().set('Content-Type', 'application/json'),
+        withCredentials: true
+      }
+    );
+  }
+
+  deleteUser(id: string): Observable<any> {
+    return this.http.delete(
+      `${this.apiUrlCashier}/deleteUser/${id}`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
 }
