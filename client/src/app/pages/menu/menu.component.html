@@ -1,58 +1,88 @@
-<div class="sort-controls">
-  <!-- Ô tìm kiếm -->
-  <div class="control-item search-box">
-    <label>Tìm thức uống:</label>
-    <input
-      type="text"
-      [(ngModel)]="searchKeyword"
-      (input)="filterProducts()"
-      placeholder="Ameriacano, Latte, Trà sữa..."
-    />
+<div class="menu-container">
+  <div class="sort-controls">
+    <!-- Ô tìm kiếm -->
+    <div class="control-item search-box">
+      <label>Tìm thức uống</label>
+      <input
+        type="text"
+        [(ngModel)]="searchKeyword"
+        (input)="filterProducts()"
+        placeholder="Nhập tên món để tìm kiếm..."
+      />
+    </div>
+
+    <!-- Lọc loại -->
+    <div class="control-item">
+      <label>Danh mục</label>
+      <select [(ngModel)]="selectedCategory" (change)="filterProducts()">
+        <option value="">Tất cả danh mục</option>
+        <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+      </select>
+    </div>
+
+    <!-- Sort giá -->
+    <div class="control-item">
+      <label>Sắp xếp giá</label>
+      <select [(ngModel)]="selectedPriceSort" (change)="filterProducts()">
+        <option value="">Mặc định</option>
+        <option value="asc">Giá thấp → cao</option>
+        <option value="desc">Giá cao → thấp</option>
+      </select>
+    </div>
   </div>
 
-  <!-- Lọc loại -->
-  <div class="control-item">
-    <label>Loại:</label>
-    <select [(ngModel)]="selectedCategory" (change)="filterProducts()">
-      <option value="">Tất cả</option>
-      <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
-    </select>
+  <div *ngIf="loading" class="loading-state">
+    <p>Đang tải thực đơn...</p>
   </div>
 
-  <!-- Sort giá -->
-  <div class="control-item">
-    <label>Giá:</label>
-    <select [(ngModel)]="selectedPriceSort" (change)="filterProducts()">
-      <option value="">Mặc định</option>
-      <option value="asc">Thấp → Cao</option>
-      <option value="desc">Cao → Thấp</option>
-    </select>
+  <div *ngIf="error" class="error-state">
+    <p>{{ error }}</p>
   </div>
 
-</div>
-
-
-<div *ngIf="loading" class="loading-state">
-  <p>Đang tải thực đơn...</p>
-</div>
-
-<div *ngIf="error" class="error-state">
-  <p>{{ error }}</p>
-</div>
-
-<div *ngIf="!loading && !error" class="menu-wrapper">
-
-  <div class="product-grid">
-    <div class="product-card" *ngFor="let p of filteredProducts" (click)="selectProduct(p)">
-      <div class="image-box">
-        <img [src]="p.urlImage" [alt]="p.nameProduct" (error)="onImgError($event)">
+  <div *ngIf="!loading && !error" class="menu-wrapper">
+    <div class="product-grid" [class.transitioning]="isTransitioning">
+      <div class="product-card" *ngFor="let p of paginatedProducts" (click)="selectProduct(p)">
+        <div class="image-box">
+          <img [src]="p.urlImage" [alt]="p.nameProduct" (error)="onImgError($event)">
+        </div>
+        <div class="card-body">
+          <h3 class="product-name">{{ p.nameProduct }}</h3>
+          <p class="price">{{ p.price | number:'1.0-0' }} ₫</p>
+        </div>
       </div>
-      <div class="card-body">
-        <h3 class="product-name">{{ p.nameProduct }}</h3>
-        <p class="price">{{ p.price | number:'1.0-0' }} ₫</p>
-        <span class="badge" [class.available]="p.status" [class.soldout]="!p.status">
-          {{ p.status ? 'Còn bán' : 'Hết hàng' }}
-        </span>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-wrapper" *ngIf="totalPages > 1">
+      <div class="pagination">
+        <!-- Previous button -->
+        <button 
+          class="pagination-btn prev-btn" 
+          [disabled]="currentPage === 1"
+          (click)="changePage(currentPage - 1)">
+          ←
+        </button>
+
+        <!-- Page numbers -->
+        <button 
+          *ngFor="let page of getPaginationArray()" 
+          class="pagination-btn page-btn"
+          [class.active]="page === currentPage"
+          (click)="changePage(page)">
+          {{ page }}
+        </button>
+
+        <!-- Next button -->
+        <button 
+          class="pagination-btn next-btn" 
+          [disabled]="currentPage === totalPages"
+          (click)="changePage(currentPage + 1)">
+          →
+        </button>
+      </div>
+      
+      <div class="pagination-info">
+        Trang {{ currentPage }} / {{ totalPages }} • {{ filteredProducts.length }} sản phẩm
       </div>
     </div>
   </div>

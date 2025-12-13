@@ -22,22 +22,93 @@
     <!-- Right Form -->
     <div class="auth-right">
       <div class="form-box">
-        <h2>SIGN UP</h2>
+        <h2>{{ currentRole === 'cashier' ? 'CREATE STAFF ACCOUNT' : 'SIGN UP' }}</h2>
         <form (ngSubmit)="onSubmit()">
           <input type="text" placeholder="Username" [(ngModel)]="username" name="username" required />
-          <input type="email" placeholder="Email" [(ngModel)]="email" name="email" required />
+          
+          <!-- Email với nút gửi OTP (chỉ cho user thường) -->
+          <div class="email-otp-group" *ngIf="currentRole !== 'cashier'">
+            <div class="email-input-wrapper">
+              <input 
+                type="email" 
+                placeholder="Email *" 
+                [(ngModel)]="email" 
+                name="email" 
+                required 
+                [disabled]="otpVerified"
+                [class.verified]="otpVerified"
+              />
+              <span class="verified-icon" *ngIf="otpVerified">✓</span>
+            </div>
+            
+            <button 
+              type="button" 
+              class="btn-send-otp"
+              (click)="sendOTP()"
+              [disabled]="otpLoading || otpVerified || !email"
+              *ngIf="!otpSent || !canResend">
+              {{ otpLoading ? 'Đang gửi...' : (otpVerified ? 'Đã xác thực' : 'Gửi mã OTP') }}
+            </button>
+
+            <button 
+              type="button" 
+              class="btn-resend-otp"
+              (click)="resendOTP()"
+              [disabled]="!canResend || otpVerified"
+              *ngIf="otpSent && !otpVerified">
+              {{ canResend ? 'Gửi lại OTP' : 'Gửi lại (' + resendCountdown + 's)' }}
+            </button>
+
+            <!-- Hiển thị input OTP sau khi gửi -->
+            <div class="otp-input-wrapper" *ngIf="otpSent && !otpVerified">
+              <input 
+                type="text" 
+                placeholder="Nhập mã OTP (4 ký tự)" 
+                [(ngModel)]="otpCode" 
+                name="otpCode"
+                maxlength="4"
+                class="otp-input"
+              />
+              <button 
+                type="button" 
+                class="btn-verify-otp"
+                (click)="verifyOTP()"
+                [disabled]="otpLoading || otpCode.length !== 4">
+                {{ otpLoading ? 'Đang xác thực...' : 'Xác thực' }}
+              </button>
+            </div>
+
+            <!-- Thông báo lỗi/thành công -->
+            <div class="otp-message error" *ngIf="otpError">{{ otpError }}</div>
+            <div class="otp-message success" *ngIf="otpSuccess">{{ otpSuccess }}</div>
+          </div>
+
+          <!-- Email bình thường cho cashier -->
+          <input 
+            *ngIf="currentRole === 'cashier'" 
+            type="email" 
+            placeholder="Email" 
+            [(ngModel)]="email" 
+            name="email" 
+            required 
+          />
 
           <!-- Chỉ hiển thị dropdown nếu người login là cashier -->
-          <select *ngIf="currentRole === 'cashier'" [(ngModel)]="role" name="role" required>
-            <option value="" disabled selected>Select Role</option>
-            <option value="barista">Barista</option>
-            <option value="waiter">Waiter</option>
+          <select 
+            *ngIf="currentRole === 'cashier'" 
+            [(ngModel)]="role" 
+            name="role" 
+            required
+            class="role-select">
+            <option value="" disabled selected>Select Staff Role *</option>
+            <option value="barista">Barista - Pha chế</option>
+            <option value="waiter">Waiter - Phục vụ</option>
           </select>
 
           <input type="password" placeholder="Password" [(ngModel)]="password" name="password" required />
           <input type="password" placeholder="Confirm Password" [(ngModel)]="confirmPassword" name="confirmPassword" required />
 
-          <button type="submit">SIGN UP</button>
+          <button type="submit">{{ currentRole === 'cashier' ? 'CREATE STAFF' : 'SIGN UP' }}</button>
         </form>
 
 

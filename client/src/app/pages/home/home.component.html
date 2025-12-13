@@ -2,7 +2,12 @@
   <div class="track" [style.transform]="trackTransform">
     <div class="slide" *ngFor="let img of images; let i = index">
       <img [src]="img" [alt]="'Carousel ' + (i + 1)" />
-      <div class="caption">Carousel {{ i + 1 }}</div>
+      <div class="slide-overlay">
+        <div class="slide-content">
+          <h3 class="slide-title">{{ getSlideTitles()[i] }}</h3>
+          <p class="slide-description">{{ getSlideDescriptions()[i] }}</p>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -44,27 +49,53 @@
   </div>
 
   <div class="menu-carousel">
-    <button class="nav prev" (click)="prevMenu()">‹</button>
+    <button class="nav prev" (click)="prevMenu()" *ngIf="canNavigateMenu" [class.visible]="canNavigateMenu">‹</button>
 
     <div class="menu-container">
-      <div class="menu-track-wrapper">
-        <div class="menu-track" [style.transform]="menuTransform">
-          <div
-            class="menu-item"
-            *ngFor="let product of products"
-            (click)="selectProduct(product)"
-          >
-            <img [src]="product.urlImage" [alt]="product.nameProduct" />
-            <div class="info">
-              <h3 class="name-product">{{ product.nameProduct }}</h3>
-              <p class="price">{{ product.price | number: '1.0-0' }} đ</p>
+      <!-- Desktop/Tablet Layout -->
+      <div class="menu-track desktop-layout" 
+           *ngIf="!isMobile"
+           [style.transform]="menuTransform" 
+           [class.center-items]="!canNavigateMenu"
+           [class.justify-start]="canNavigateMenu"
+           [class.smooth-transition]="true">
+        <div
+          class="menu-item"
+          *ngFor="let product of desktopProducts; trackBy: trackByProductId"
+          (click)="selectProduct(product)"
+        >
+          <img [src]="product.urlImage" [alt]="product.nameProduct" loading="lazy" />
+          <div class="info">
+            <h3 class="name-product">{{ product.nameProduct }}</h3>
+            <p class="price">{{ product.price | number: '1.0-0' }} đ</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mobile Layout (2x2 Grid) -->
+      <div class="menu-track mobile-layout" 
+           *ngIf="isMobile"
+           [style.transform]="menuTransform" 
+           [class.center-items]="!canNavigateMenu"
+           [class.smooth-transition]="true">
+        <div class="mobile-group" *ngFor="let group of mobileGroupedProducts; let i = index; trackBy: trackByGroupIndex">
+          <div class="mobile-grid">
+            <div
+              class="menu-item"
+              *ngFor="let product of group; trackBy: trackByProductId"
+              (click)="selectProduct(product)"
+            >
+              <img [src]="product.urlImage" [alt]="product.nameProduct" loading="lazy" />
+              <div class="info">
+                <h3 class="name-product">{{ product.nameProduct }}</h3>
+                <p class="price">{{ product.price | number: '1.0-0' }} đ</p>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-
-    <button class="nav next" (click)="nextMenu()">›</button>
+    <button class="nav next" (click)="nextMenu()" *ngIf="canNavigateMenu" [class.visible]="canNavigateMenu">›</button>
   </div>
 </div>

@@ -18,7 +18,6 @@ export class AuthService {
 
   constructor(private http: HttpClient) {}
 
-  // ------------------ TOKEN HELPER ------------------
   private getAuthHeaders(): HttpHeaders {
     const token = localStorage.getItem('accessToken') || '';
     return new HttpHeaders({
@@ -42,8 +41,42 @@ export class AuthService {
     localStorage.setItem('accessToken', token);
   }
 
-  // ------------------ REGISTER ------------------
+  sendOTP(email: string): Observable<any> {
+    return this.http.post(
+      `${this.apiUrl}/send-otp`,
+      { email },
+      { 
+        headers: { 'Content-Type': 'application/json' },
+        withCredentials: true 
+      }
+    );
+  }
+
+  // Xác thực mã OTP
+  verifyOTP(email: string, otp: string): Observable<any> {
+    return this.http.post(
+      `${this.apiUrl}/verify-otp`,
+      { email, otp },
+      { 
+        headers: { 'Content-Type': 'application/json' },
+        withCredentials: true 
+      }
+    );
+  }
+
   register(data: any): Observable<any> {
+    return this.http.post(
+      `${this.apiUrl}/register`,
+      data,
+      { 
+        headers: { 'Content-Type': 'application/json' },
+        withCredentials: true 
+      }
+    );
+  }
+
+  // Cashier tạo tài khoản nhân viên (cần auth)
+  cashierRegister(data: any): Observable<any> {
     const headers = this.getAuthHeaders().set('Content-Type', 'application/json');
 
     return this.http.post(
@@ -105,8 +138,11 @@ export class AuthService {
 
   deleteUser(id: string): Observable<any> {
     return this.http.delete(
-      `${this.apiUrlCashier}/deleteUser/${id}`,
-      { headers: this.getAuthHeaders() }
+      `${this.apiUrlCashier}/deleteUser`,
+      { 
+        headers: this.getAuthHeaders(),
+        body: { id: id }
+      }
     );
   }
 }
