@@ -28,6 +28,7 @@ revenue-page {
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
+  margin-bottom: 20px;
 }
 
 .summary {
@@ -99,6 +100,50 @@ revenue-page {
     .reset {
       background: #2563eb;
       color: #fff;
+    }
+  }
+}
+
+.content-two-col {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+
+  .chart-panel {
+    width: 100%;
+    min-height: 480px;
+    max-width: 1000px;
+    margin: 0 auto;
+    background: #fff;
+    border: 1px solid #e6e6e6;
+    border-radius: 12px;
+    padding: 12px 12px 18px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+  }
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+  }
+  .stat-card {
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 10px 12px;
+
+    .label {
+      display: block;
+      color: #6b7280;
+      font-size: 0.9rem;
+    }
+    .value {
+      display: block;
+      color: #111827;
+      font-size: 1.1rem;
+      font-weight: 800;
+      margin-top: 4px;
     }
   }
 }

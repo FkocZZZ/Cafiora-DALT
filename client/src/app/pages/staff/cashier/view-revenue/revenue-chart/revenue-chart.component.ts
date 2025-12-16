@@ -1,10 +1,7 @@
-import { Component, computed, signal, input, inject, DestroyRef } from '@angular/core';
+import { Component, computed, signal, input, effect } from '@angular/core';
 import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { OrderDetailModel, OrderModel } from '../../../../../model/order.model';
-import { OrderService } from '../../../../../services/order.service';
-import { toObservable, takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, map, of, switchMap } from 'rxjs';
 
 Chart.register(...registerables);
 
@@ -19,16 +16,10 @@ export class RevenueChartComponent {
   // input signal: ngày căn cứ
   readonly baseDate = input<Date>(new Date());
 
-  // state
-  private readonly rawOrders = signal<OrderModel[]>([]);
   private readonly last7Labels = signal<string[]>([]);
   private readonly last7Values = signal<number[]>([]);
-  readonly loading = signal(false);
-  readonly error = signal<string | null>(null);
 
-  // services
-  private readonly orderService = inject(OrderService);
-  private readonly destroyRef = inject<DestroyRef>(DestroyRef);
+  readonly ordersInput = input<OrderModel[]>([]);
 
   readonly chartOptions: ChartConfiguration['options'] = {
     responsive: true,
@@ -37,6 +28,9 @@ export class RevenueChartComponent {
     elements: { line: { tension: 0.3 } },
     scales: {
       y: {
+        beginAtZero: true,
+        suggestedMin: 0,
+        suggestedMax: 1,
         ticks: {
           callback: (v: any) => Intl.NumberFormat('vi').format(Number(v))
         }
@@ -45,7 +39,7 @@ export class RevenueChartComponent {
   };
 
   private readonly mappedOrders = computed(() =>
-    this.rawOrders().map(o => {
+    this.ordersInput().map(o => {
       const details: OrderDetailModel[] = o.orderDetails ?? [];
       type OrderItem = OrderDetailModel['items'][number];
       const items: OrderItem[] = details.flatMap((od: OrderDetailModel) => od.items);
@@ -69,33 +63,13 @@ export class RevenueChartComponent {
   }));
 
   constructor() {
-    // gọi API mỗi khi baseDate đổi
-    toObservable(this.baseDate)
-      .pipe(
-        map(base => {
-          const start = this.shiftDays(base, -6);
-          const end = this.shiftDays(base, 0);
-          this.buildLast7Days(base);
-          this.loading.set(true);
-          this.error.set(null);
-          return { start, end };
-        }),
-        switchMap(({ start, end }) =>
-          this.orderService.getOrdersWithDetailsByDateRange(start, end).pipe(
-            catchError(err => {
-              console.error(err);
-              this.error.set('Không tải được dữ liệu');
-              return of([] as OrderModel[]);
-            })
-          )
-        ),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe(orders => {
-        this.rawOrders.set(orders);
-        this.recalcValues();
-        this.loading.set(false);
-      });
+    effect(() => {
+      const base = this.baseDate();
+      const _orders = this.ordersInput();
+
+      this.buildLast7Days(base);
+      this.recalcValues();
+    });
   }
 
   private buildLast7Days(base: Date) {

@@ -1,3 +1,15 @@
+@use 'sass:color';
+$coffee-bg: #f8f1e7;
+$coffee-surface: #ffffff;
+$coffee-border: #d1b28a;
+$coffee-primary: #8b5a2b;
+$coffee-primary-dark: #4b2b19;
+$coffee-text-main: #22130b;
+
+:host {
+  font-family: Arial, sans-serif;
+}
+
 .history-controls {
   display: flex;
   justify-content: space-between;
@@ -9,6 +21,7 @@
     display: flex;
     gap: 8px;
     font-size: .95rem;
+    color: $coffee-primary-dark;
 
     label { cursor: pointer; }
   }
@@ -18,13 +31,13 @@
     border: none;
     border-radius: 5px;
     padding: 10px;
-    background-color: #856F59;
-    color: #F5E6D3;
+    background-color: $coffee-primary;
+    color: $coffee-bg;
     font-size: 1rem;
     font-weight: bold;
     cursor: pointer;
     &:hover {
-      background-color: #62503e;
+      background-color: $coffee-primary-dark;
     }
     &:active {
       transform: scale(0.9);
@@ -40,6 +53,9 @@
   margin-top: 8px;
   padding: 10px;
   box-sizing: border-box;
+  background: $coffee-bg;
+  border-radius: 16px;
+  box-shadow: 0 10px 28px rgba(58, 36, 18, 0.25);
 
   @media (max-width: 720px){ flex-direction: column; }
 }
@@ -60,15 +76,17 @@
   }
 
   .order-card {
-    background: #fff;
-    border: 1px solid #e5e7eb;
+    background: $coffee-surface;
+    border: 1px solid $coffee-border;
     border-radius: 8px;
     margin-bottom: 10px;
     padding: 8px;
-    box-shadow: 0 2px 6px rgba(0,0,0,.04);
+    box-shadow: 0 4px 10px rgba(58, 36, 18, 0.12);
     cursor: pointer;
     &:hover {
-        background-color: #cbc9c9;
+      background: linear-gradient(135deg, rgba($coffee-primary, 0.08), rgba($coffee-primary-dark, 0.14));
+      border-color: $coffee-primary;
+      box-shadow: 0 6px 14px rgba(75, 43, 25, 0.35);
     }
     &:active {
       transform: scale(0.95);
@@ -122,56 +140,150 @@
 /* --- ORDER DETAIL --- */
 .order-detail {
   flex: 1;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 12px;
+  background: $coffee-bg;
+
+  > h3 {
+    margin: 0 0 10px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #3b2615;
+  }
+
+  /* dải màu mỏng phía trên */
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #4b2b19, #b46335, #d7a45a);
+  }
 
   .detail-card {
-    padding: 10px;
-    border-radius: 6px;
+    margin-top: 10px;
+    background: $coffee-surface;         // trắng
+    border: 1px solid $coffee-border;
+    border-radius: 14px;
+    padding: 14px 16px 18px;
+  }
 
-    .meta {
-      // display: flex;
-      // flex-wrap: wrap;
-      gap: 12px;
-      margin-bottom: 10px;
+  /* Thông tin meta trên đầu */
+  .meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 8px 18px;
+    margin-bottom: 14px;
+    font-size: 0.9rem;
 
-      div { min-width: 120px; margin-bottom: 10px; }
+    div {
+      min-width: 140px;
+      color: #5c4734;
+
+      strong {
+        color: #3b2615;
+      }
     }
 
-    .detail-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 30px;
-      border-radius: 5px;
+    .status {
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
 
-      th, td {
-        padding: 8px;
-        border: 1px solid #ddd;
+      &.paid {
+        background: rgba(22, 163, 74, 0.08);
+        color: #166534;
+        border: 1px solid rgba(21, 128, 61, 0.5);
       }
-
-      tfoot td { font-weight: 700; }
+      &.unpaid {
+        background: rgba(220, 38, 38, 0.08);
+        color: #b91c1c;
+        border: 1px solid rgba(220, 38, 38, 0.45);
+      }
     }
   }
 
-  button {
-    margin-top: 1.7rem;
-    display: block;
-    margin-left: auto;
-    border: none;
-    border-radius: 5px;
-    padding: 10px;
-    background-color: #856F59;
-    color: #F5E6D3;
-    font-size: 1rem;
-    font-weight: bold;
-    cursor: pointer;
-    &:hover {
-      background-color: #62503e;
+  /* Bảng chi tiết tông cà phê */
+  .detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 6px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fffdf8;
+    font-size: 0.9rem;
+
+    thead {
+      background: linear-gradient(135deg, $coffee-primary-dark, $coffee-primary);
+      color: #fff;                         // trắng rõ
+
+      th {
+        padding: 10px 8px;
+        text-align: right;
+        font-weight: 600;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+      }
+
+      th:nth-child(2) { text-align: left; };
     }
+
+    tbody {
+      tr:nth-child(odd)  { background: #fffaf2; }
+      tr:nth-child(even) { background: #f4e4cf; }
+
+      td {
+        padding: 8px 8px;
+        border-bottom: 1px solid #ead6b9;
+        color: #4b3622;
+      }
+    }
+
+    tfoot {
+      background: #f2e0c5;
+
+      td {
+        padding: 9px 8px;
+        font-weight: 700;
+        color: #3b2615;
+      }
+    }
+
+    /* Căn phải các cột số */
+    // tfoot td:last-child {
+    //   text-align: right;
+    // }
+    th:nth(2) {
+      text-align: left;
+    }
+  }
+
+  /* Nút Checkout tông cafe */
+  button {
+    display: block;
+    margin-top: 18px;
+    margin-left: auto;
+    gap: 6px;
+    border: none;
+    border-radius: 999px;
+    padding: 9px 18px;
+    background: linear-gradient(135deg, $coffee-primary, $coffee-primary-dark);
+    color: #f5e6d3;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 10px 28px rgba(58, 36, 18, 0.5);
+    transition: transform .08s ease, box-shadow .08s ease, filter .08s ease;
+
+    &:hover {
+      filter: brightness(1.04);
+      transform: translateY(-1px);
+      box-shadow: 0 14px 34px rgba(58, 36, 18, 0.6);
+    }
+
     &:active {
-      transform: scale(0.9);
+      transform: translateY(0);
+      box-shadow: 0 6px 18px rgba(58, 36, 18, 0.45);
     }
   }
 }

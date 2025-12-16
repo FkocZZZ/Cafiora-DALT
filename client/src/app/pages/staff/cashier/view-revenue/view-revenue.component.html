@@ -43,8 +43,39 @@
   </section>
 
   <div class="content-two-col">
-    <app-revenue-chart  [baseDate]="selectedDate() ?? today"></app-revenue-chart>
+    <section class="chart-panel">
+      <div class="chart-header">
+        <div>
+          <h2>Doanh thu 7 ngày gần nhất</h2>
+          <p class="subtitle">
+            Căn theo ngày: {{ (selectedDate() ?? today) | date:'dd/MM/yyyy' }}
+          </p>
+        </div>
+      </div>
 
-    <app-revenue-detail [orders]="orders()" [selectedDate]="selectedDate()"/>
+      <app-revenue-chart
+        [baseDate]="selectedDate() ?? today"
+        [ordersInput]="orders()">
+      </app-revenue-chart>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <span class="label">Doanh thu ngày đã chọn</span>
+          <strong class="value">{{ dayRevenue() | currency:'VND':'symbol':'1.0-0' }}</strong>
+        </div>
+        <div class="stat-card">
+          <span class="label">Doanh thu tuần đã chọn</span>
+          <strong class="value">{{ weekRevenue() | currency:'VND':'symbol':'1.0-0' }}</strong>
+        </div>
+        <div class="stat-card">
+          <span class="label">Doanh thu tháng</span>
+          <strong class="value">{{ monthlyRevenue() | currency:'VND':'symbol':'1.0-0' }}</strong>
+        </div>
+        <div class="stat-card">
+          <span class="label">Doanh thu năm</span>
+          <strong class="value">{{ yearRevenue() | currency:'VND':'symbol':'1.0-0' }}</strong>
+        </div>
+      </div>
+    </section>
   </div>
 </div>

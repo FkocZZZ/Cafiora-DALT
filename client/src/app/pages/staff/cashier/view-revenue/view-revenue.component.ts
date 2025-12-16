@@ -1,47 +1,73 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CalendarComponent } from '../../../../shared/calendar/calendar.component';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { OrderModel } from '../../../../model/order.model';
 import { RevenueChartComponent } from './revenue-chart/revenue-chart.component';
-import { RevenueDetailComponent } from './revenue-detail/revenue-detail.component';
 import { OrderService } from '../../../../services/order.service';
 
 @Component({
   selector: 'app-view-revenue',
-  imports: [CalendarComponent, DatePipe, CurrencyPipe, RevenueChartComponent, RevenueDetailComponent],
+  imports: [CalendarComponent, DatePipe, CurrencyPipe, RevenueChartComponent],
   templateUrl: './view-revenue.component.html',
   styleUrl: './view-revenue.component.scss'
 })
 export class ViewRevenueComponent {
+  private orderService = inject(OrderService);
   readonly selectedDate = signal<Date | null>(null);
   readonly calendarOpen = signal<boolean>(false);
   readonly today = new Date();
 
   readonly orders = signal<OrderModel[]>([]);
-  readonly pageIndex = signal(0);
-  readonly pageSize = 5;
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
 
+  private readonly baseDate = computed(() => this.selectedDate() ?? this.today);
+
   private readonly mappedOrders = computed(() => 
     this.orders().map(o => {
-      const items = (o.orderDetails?.flatMap(od => od.items) ?? []);
-      const totalQuantity = items.reduce((s, it) => s + (it.quantity ?? 0), 0);
-      const amount = items.reduce((s, it) => s + (it.subtotal ?? ((it.quantity ?? 0) * (it.unitPrice ?? 0))), 0);
+      const items = o.orderDetails?.flatMap(od => od.items) ?? [];
+      const amount = items.reduce((s, it) => s + (it.subtotal ?? (it.quantity ?? 0) * (it.unitPrice ?? 0)), 0);
       const created = o.createdAt ? new Date(o.createdAt) : new Date();
-      return {
-        id: o.orderId,
-        code: o.orderId,
-        date: created,
-        table: o.tableNumber,
-        customer: o.customerName || 'Khách lẻ',
-        items,
-        totalQuantity,
-        amount,
-        isPaid: !!o.isPaid
-      };
+      return { id: o.orderId, date: created, amount };
     })
   );
+
+  private startOfDay(date: Date) {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  private endOfDay(date: Date) {
+    const d = new Date(date);
+    d.setHours(23, 59, 59, 999);
+    return d;
+  }
+
+  private startOfWeek(date: Date) {
+    const d = this.startOfDay(date);
+    const diff = (d.getDay() + 6) % 7; // Monday as start
+    d.setDate(d.getDate() - diff);
+    return d;
+  }
+
+  private endOfWeek(date: Date) {
+    const d = this.startOfWeek(date);
+    d.setDate(d.getDate() + 6);
+    d.setHours(23, 59, 59, 999);
+    return d;
+  }
+
+  private totalInRange(start: Date, end: Date) {
+    const s = start.getTime();
+    const e = end.getTime();
+    return this.mappedOrders()
+      .filter(r => {
+        const t = r.date.getTime();
+        return t >= s && t <= e;
+      })
+      .reduce((sum, r) => sum + r.amount, 0);
+  }
 
   readonly filteredOrders = computed(() => {
     const selected = this.selectedDate();
@@ -56,31 +82,38 @@ export class ViewRevenueComponent {
     return data;
   });
 
-  readonly pagedOrders = computed(() => {
-    const start = this.pageIndex() * this.pageSize;
-    return this.filteredOrders().slice(start, start + this.pageSize);
-  });
-
-  readonly totalPages = computed(() => {
-    const total = this.filteredOrders().length;
-    return Math.max(1, Math.ceil(total / this.pageSize));
-  });
-
   readonly monthlyRevenue = computed(() => {
-    const base = this.selectedDate() ?? new Date();
+    const base = this.baseDate();
     return this.mappedOrders()
       .filter(r => r.date.getMonth() === base.getMonth() && r.date.getFullYear() === base.getFullYear())
       .reduce((s, r) => s + r.amount, 0);
   });
 
-  constructor(private orderService: OrderService) {
+  readonly dayRevenue = computed(() => {
+    const base = this.baseDate();
+    return this.totalInRange(this.startOfDay(base), this.endOfDay(base));
+  });
+
+  readonly weekRevenue = computed(() => {
+    const base = this.baseDate();
+    return this.totalInRange(this.startOfWeek(base), this.endOfWeek(base));
+  });
+
+  readonly yearRevenue = computed(() => {
+    const base = this.baseDate();
+    return this.mappedOrders()
+      .filter(r => r.date.getFullYear() === base.getFullYear())
+      .reduce((s, r) => s + r.amount, 0);
+  });
+
+  constructor() {
     this.fetchOrders();
   }
 
   private fetchOrders(): void {
     this.loading.set(true);
     this.error.set(null);
-    this.orderService.getAllOrdersWithDetails().subscribe({
+    this.orderService.getAllOrdersWithDetailsForCashier().subscribe({
       next: (orders) => {
         this.setOrders(orders);
         this.loading.set(false);
@@ -99,34 +132,16 @@ export class ViewRevenueComponent {
 
   onCalendarSelect(date: Date): void {
     this.selectedDate.set(date);
-    //Cho Calendar tự đóng sau khi select ngày
-    // this.calendarOpen.set(false);
-  }
 
-  apply(): void {
-    // TODO: gọi API/filter theo selectedDate()
-    // ví dụ: this.loadRevenue({ date: this.selectedDate() })
-    this.pageIndex.set(0);
   }
 
   reset(): void {
     this.selectedDate.set(null);
     this.calendarOpen.set(false);
-    this.pageIndex.set(0);
-    // TODO: reset dữ liệu hiển thị
   }
 
   setOrders(data: OrderModel[]) {
     this.orders.set(data ?? []);
-    this.pageIndex.set(0);
-  }
-
-  nextPage() {
-    if (this.pageIndex() + 1 < this.totalPages()) this.pageIndex.update(v => v + 1);
-  }
-
-  prevPage() {
-    if (this.pageIndex() > 0) this.pageIndex.update(v => v - 1);
   }
 
 }

@@ -135,22 +135,83 @@ export class PrintInvoiceComponent implements OnInit {
     const current = this.selectedOrder();
     if (!current) return;
 
-    if(current.isPaid) {
-      this.showToast('Đơn hàng đã được thanh toán', 5000);
-      return;
+    if (!current.isPaid) {
+      current.isPaid = true;
+      this.applyFilters();
+      this.showToast('Đã thanh toán thành công', 5000);
+    } else {
+      this.showToast('Đơn hàng đã được thanh toán', 5000)
     }
 
-    //Cap nhat server
-    // this.orderService.markPaid(this.selectedOrder.orderId).subscribe({
-    //   next: () => this.showToast('Đã thanh toán thành công', 3000),
-    //   error: () => this.showToast('Thanh toán thất bại', 3000)
-
-    current.isPaid = true;
-    this.applyFilters();
-
-    
-    this.showToast('Đã thanh toán thành công', 5000);
+    //Xuat hoa don
+    this.downloadInvoiceFile(current);
   }
+
+  private downloadInvoiceFile(order: any) {
+  const items = this.getItems(order);
+
+  const formatCurrency = (v: number) =>
+    new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(v);
+
+  const padRight = (value: string, length: number) =>
+    (value ?? '').toString().padEnd(length, ' ');
+  const padLeft = (value: string, length: number) =>
+    (value ?? '').toString().padStart(length, ' ');
+
+  let content = '';
+
+  // Header quán
+  content += '        CAFIORA COFFEE\n';
+  content += '      HÓA ĐƠN THANH TOÁN\n';
+  content += '--------------------------------------------------------------------\n';
+
+  // Thông tin chung
+  content += `Mã đơn    : ${order.orderId}\n`;
+  content += `Ngày giờ  : ${new Date(order.createdAt).toLocaleString('vi-VN')}\n`;
+  content += `Bàn       : ${order.tableName ?? order.tableNumber ?? ''}\n`;
+  content += `Khách hàng: ${order.customerName || '—'}\n`;
+  content += `Nhân viên : ${order.employee?.username || '—'}\n`;
+  content += `Ghi chú   : ${order.note || '—'}\n`;
+  content += '--------------------------------------------------------------------\n';
+  content += '        CHI TIẾT MÓN GỌI\n';
+  content += '--------------------------------------------------------------------\n';
+
+  // Header bảng
+  content +=
+    padRight('STT', 3) + ' ' +
+    padRight('Tên món', 22) +
+    padLeft('SL', 4) + ' ' +
+    padLeft('Đơn giá', 14) + ' ' +
+    padLeft('Thành tiền', 14) + '\n';
+  content += '----------------------------------------\n';
+
+  // Dòng món
+  items.forEach((it: any, index: number) => {
+    const lineTotal = this.itemTotal(it);
+    const line =
+      padRight(String(index + 1), 3) + ' ' +
+      padRight(it.productName ?? '', 22) +
+      padLeft(String(it.quantity ?? 0), 4) + ' ' +
+      padLeft(formatCurrency(it.unitPrice), 14) + ' ' +
+      padLeft(formatCurrency(lineTotal), 14);
+    content += line + '\n';
+  });
+
+  content += '----------------------------------------\n';
+  const total = this.calcTotal(order);
+  content += padLeft('TỔNG CỘNG: ' + formatCurrency(total), 40) + '\n';
+  content += `Trạng thái: ${order.isPaid ? 'PAID' : 'UNPAID'}\n`;
+  content += '\nCảm ơn Quý khách! Hẹn gặp lại.\n';
+  content += '----------------------------------------\n';
+
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `invoice-${order.orderId || 'order'}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
   showToast(message: string, duration = 5000) {
     this.toastMessage = message;
