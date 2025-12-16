@@ -36,8 +36,8 @@
             <span>{{ order.createdAt | date: 'HH:mm' }}</span>
             <span class="customer-name">{{ order.customerName || 'Khách' }}</span>
             <div class="progress-info">
-              <span class="completed">✓{{ getCompletedItemsCount(order) }}</span>
-              <span class="pending">⏳{{ getPendingItemsCount(order) }}</span>
+              <span class="completed">{{ getCompletedItemsCount(order) }}</span>
+              <span class="pending">{{ getPendingItemsCount(order) }}</span>
             </div>
           </div>
         </div>
@@ -58,14 +58,14 @@
                     </span>
                     @if (showCompletedItems && item.completedCount > 0) {
                       <span class="progress-info">
-                        <span class="completed-mark">✓{{ item.completedCount }}</span>
+                        <span class="completed-mark">{{ item.completedCount }}</span>
                         @if (item.pendingCount > 0) {
-                          <span class="pending-mark">⏳{{ item.pendingCount }}</span>
+                          <span class="pending-mark">{{ item.pendingCount }}</span>
                         }
                       </span>
                     }
                     @if (isItemCompleted(order, item) && showCompletedItems) {
-                      <span class="completed-mark">✓ HOÀN TẤT</span>
+                      <span class="completed-mark"> HOÀN TẤT</span>
                     }
                   </div>
                   

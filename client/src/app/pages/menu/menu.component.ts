@@ -23,6 +23,7 @@ interface Product {
 export class MenuComponent implements OnInit {
   products: Product[] = [];
   filteredProducts: Product[] = [];
+  paginatedProducts: Product[] = [];
   cart: { product: Product; quantity: number }[] = [];
   loading = false;
   error = '';
@@ -31,6 +32,12 @@ export class MenuComponent implements OnInit {
   selectedCategory: string = '';
   selectedPriceSort: string = '';
   searchKeyword: string = '';
+
+  // Pagination properties
+  currentPage: number = 1;
+  itemsPerPage: number = 4;
+  totalPages: number = 0;
+  isTransitioning: boolean = false;
 
 
   constructor(private http: HttpClient) {}
@@ -45,6 +52,7 @@ export class MenuComponent implements OnInit {
       next: (res) => {
         this.products = res.dataProduct || [];
         this.filteredProducts = [...this.products];
+        this.updatePagination();
         this.loading = false;
       },
       error: (err) => {
@@ -78,6 +86,32 @@ export class MenuComponent implements OnInit {
 
 
     this.filteredProducts = temp;
+    this.currentPage = 1; // Reset về trang đầu khi filter
+    this.updatePagination();
+  }
+
+  updatePagination() {
+    this.totalPages = Math.ceil(this.filteredProducts.length / this.itemsPerPage);
+    if (this.totalPages === 0) this.totalPages = 1;
+    
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    this.paginatedProducts = this.filteredProducts.slice(startIndex, endIndex);
+  }
+
+  changePage(page: number) {
+    if (page < 1 || page > this.totalPages || page === this.currentPage) return;
+    
+    this.isTransitioning = true;
+    setTimeout(() => {
+      this.currentPage = page;
+      this.updatePagination();
+      this.isTransitioning = false;
+    }, 150);
+  }
+
+  getPaginationArray(): number[] {
+    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
   }
 
   onImgError(event: Event) {

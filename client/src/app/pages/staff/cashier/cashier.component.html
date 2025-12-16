@@ -3,22 +3,34 @@
   <nav>
     <ul>
       <li>
-        <i class="fa-solid fa-user-plus"></i>
-        <a routerLink="/cashier/edit-drink" routerLinkActive="active">Manage Drinks</a>
+        <a routerLink="/cashier/edit-drink" routerLinkActive="active">
+          <i class="fa-solid fa-cocktail"></i>
+          <span>Manage Drinks</span>
+        </a>
       </li>
       <li>
-        <i class="fa-solid fa-user-plus"></i>
-        <a routerLink="/register" routerLinkActive="active">Create Account</a>
+        <a routerLink="/cashier/manage-staff" routerLinkActive="active">
+          <i class="fa-solid fa-users"></i>
+          <span>Manage Staff</span>
+        </a>
       </li>
-
       <li>
-        <i class="fa-solid fa-chart-simple"></i>
-        <a routerLink="/cashier/view-revenue" routerLinkActive="active">View Revenue</a>
+        <a routerLink="/register" routerLinkActive="active">
+          <i class="fa-solid fa-user-plus"></i>
+          <span>Create Account</span>
+        </a>
       </li>
-
       <li>
-        <i class="fa-solid fa-print"></i>
-        <a routerLink="/cashier/print-invoice" routerLinkActive="active">Print-invoice</a>
+        <a routerLink="/cashier/view-revenue" routerLinkActive="active">
+          <i class="fa-solid fa-chart-simple"></i>
+          <span>View Revenue</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/cashier/print-invoice" routerLinkActive="active">
+          <i class="fa-solid fa-print"></i>
+          <span>Print Invoice</span>
+        </a>
       </li>
     </ul>
   </nav>

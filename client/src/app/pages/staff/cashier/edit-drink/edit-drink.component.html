@@ -1,24 +1,33 @@
 <div class="edit-drink-container">
 
-  <!-- DANH SÁCH SẢN PHẨM BÊN TRÁI -->
+  <!-- Success/Error Messages -->
+  <div *ngIf="successMessage" class="message success">
+    {{ successMessage }}
+  </div>
+  <div *ngIf="errorMessage" class="message error">
+    {{ errorMessage }}
+  </div>
+
   <div class="product-list">
     <h3>Danh sách món</h3>
     <ul>
-      <li *ngFor="let product of products" (click)="selectProduct(product)">
+      <li *ngFor="let product of products" 
+          (click)="selectProduct(product)"
+          [class.selected]="selectedProductId === product._id">
         <img [src]="product.urlImage" alt="{{product.nameProduct}}">
         <div class="product-info">
           <strong>{{product.nameProduct}}</strong>
           <span>{{product.price | currency:'VND'}}</span>
           <small>Category: {{product.category}}</small>
         </div>
-        <button class="delete-btn" (click)="deleteProduct(product._id); $event.stopPropagation();">Xóa</button>
+        <button class="delete-btn" (click)="deleteProduct(product._id); $event.stopPropagation();">🗑️</button>
       </li>
     </ul>
   </div>
 
   <!-- FORM THÊM/SỬA BÊN PHẢI -->
   <div class="edit-form">
-    <h3>{{selectedProductId ? 'Chỉnh sửa món' : 'Thêm món mới'}}</h3>
+    <h3>{{selectedProductId ? ' Chỉnh sửa món' : 'Thêm món mới'}}</h3>
     <form (ngSubmit)="selectedProductId ? updateProduct() : uploadProduct()" [formGroup]="editForm">
       <label>
         Tên món:
@@ -44,17 +53,15 @@
 
       <div class="form-actions">
         <button type="submit" [disabled]="loading">
-          <span *ngIf="!loading">{{selectedProductId ? 'Cập nhật' : 'Upload'}}</span>
-          <span *ngIf="loading" class="spinner"></span>
+          <span *ngIf="!loading">{{selectedProductId ? 'Cập nhật' : 'Thêm món'}}</span>
+          <span *ngIf="loading">Đang xử lý<span class="spinner"></span></span>
         </button>
 
-        <button type="button" (click)="editForm.reset(); selectedFile=null; selectedProductId=null;" [disabled]="loading">
-          Hủy
+        <button type="button" (click)="resetForm()" [disabled]="loading">
+          Làm mới
         </button>
       </div>
     </form>
-
-    <div class="error-message" *ngIf="errorMessage">{{errorMessage}}</div>
   </div>
 
 </div>

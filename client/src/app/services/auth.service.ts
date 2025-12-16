@@ -18,7 +18,6 @@ export class AuthService {
 
   constructor(private http: HttpClient) {}
 
-  // ------------------ TOKEN HELPER ------------------
   private getAuthHeaders(): HttpHeaders {
     const token = localStorage.getItem('accessToken') || '';
     return new HttpHeaders({
@@ -42,8 +41,42 @@ export class AuthService {
     localStorage.setItem('accessToken', token);
   }
 
-  // ------------------ REGISTER ------------------
+  sendOTP(email: string): Observable<any> {
+    return this.http.post(
+      `${this.apiUrl}/send-otp`,
+      { email },
+      { 
+        headers: { 'Content-Type': 'application/json' },
+        withCredentials: true 
+      }
+    );
+  }
+
+  // Xác thực mã OTP
+  verifyOTP(email: string, otp: string): Observable<any> {
+    return this.http.post(
+      `${this.apiUrl}/verify-otp`,
+      { email, otp },
+      { 
+        headers: { 'Content-Type': 'application/json' },
+        withCredentials: true 
+      }
+    );
+  }
+
   register(data: any): Observable<any> {
+    return this.http.post(
+      `${this.apiUrl}/register`,
+      data,
+      { 
+        headers: { 'Content-Type': 'application/json' },
+        withCredentials: true 
+      }
+    );
+  }
+
+  // Cashier tạo tài khoản nhân viên (cần auth)
+  cashierRegister(data: any): Observable<any> {
     const headers = this.getAuthHeaders().set('Content-Type', 'application/json');
 
     return this.http.post(
@@ -81,6 +114,35 @@ export class AuthService {
     return this.http.delete(
       `${this.apiUrlCashier}/deleteProduct/${id}`,
       { headers: this.getAuthHeaders() }
+    );
+  }
+
+  // ------------------ USER MANAGEMENT ------------------
+  getAllUsers(): Observable<any> {
+    return this.http.get(
+      `${this.apiUrlCashier}/getAllUser`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  updateUser(id: string, userData: any): Observable<any> {
+    return this.http.put(
+      `${this.apiUrlCashier}/updateUser/${id}`,
+      userData,
+      { 
+        headers: this.getAuthHeaders().set('Content-Type', 'application/json'),
+        withCredentials: true
+      }
+    );
+  }
+
+  deleteUser(id: string): Observable<any> {
+    return this.http.delete(
+      `${this.apiUrlCashier}/deleteUser`,
+      { 
+        headers: this.getAuthHeaders(),
+        body: { id: id }
+      }
     );
   }
 }
