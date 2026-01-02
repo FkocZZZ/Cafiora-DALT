@@ -164,6 +164,9 @@ $coffee-text-main: #22130b;
     border: 1px solid $coffee-border;
     border-radius: 14px;
     padding: 14px 16px 18px;
+    // Giới hạn chiều cao và cho phép scroll nội dung chi tiết
+    max-height: calc(100dvh - 260px);
+    overflow-y: auto;
   }
 
   /* Thông tin meta trên đầu */
